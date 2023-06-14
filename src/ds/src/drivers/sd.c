@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 by SWAT <swat@211.ru>
+ * Copyright (c) 2014, 2023 by SWAT <swat@211.ru>
  *
  * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,13 +15,13 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include "retrolog.h"
 
 /* For CRC16-CCITT */
 #include <kos/net.h>
 
 #include <kos/blockdev.h>
 #include <kos/dbglog.h>
-#include "retrolog.h"
 
 //#define SD_DEBUG 1
 
@@ -150,31 +150,27 @@ static uint8 send_cmd (
 	cb[5] = sd_crc7(cb, 5, 0);
 	/* Send command packet */
 
-	int old = irq_disable();
 	spi_send_byte(cmd);		/* Command */
 	spi_send_byte(cb[1]);		/* Argument[31..24] */
 	spi_send_byte(cb[2]);		/* Argument[23..16] */
 	spi_send_byte(cb[3]);		/* Argument[15..8] */
 	spi_send_byte(cb[4]);		/* Argument[7..0] */
-	spi_send_byte(cb[5]);           // CRC7
+	spi_send_byte(cb[5]);		/* CRC7 */
 
 	/* Receive command response */
 	if (cmd == CMD12) 
 		(void)spi_rec_byte();		/* Skip a stuff byte when stop reading */
 
 	n = 20;						/* Wait for a valid response in timeout of 10 attempts */
-	
+
 	do {
-		
 		res = spi_rec_byte();
-		
 	} while ((res & 0x80) && --n);
 	
 #ifdef SD_DEBUG
 	dbglog(DBG_DEBUG, "%s: CMD 0x%02x response 0x%02x\n", __func__, cmd, res);
 #endif
-	
-	irq_restore(old);
+
 	return res;			/* Return with the response value */
 }
 
@@ -242,8 +238,9 @@ int sdc_init(void) {
 	int i;
 	uint8 n, ty = 0, ocr[4];
 	
-    if(initted)
-        return 0;
+	if(initted) {
+		return 0;
+	}
 	
 	if(spi_init(0)) {
 		return -1;
@@ -263,7 +260,6 @@ int sdc_init(void) {
 		dbglog(DBG_DEBUG, "%s: Enter Idle state\n", __func__);
 #endif
 		timer_spin_sleep(20);
-//		thd_sleep(100);
 		
 		i = 0;
 		
@@ -335,7 +331,6 @@ int sdc_init(void) {
 	(void)spi_slow_sr_byte(0xff); /* Idle (Release DO) */
 
 	if (ty) { /* Initialization succeded */
-//		sdc_print_ident();
 		initted = 1;
 		return 0;
 	}
@@ -368,7 +363,7 @@ static int read_data (
 )
 {
 	uint8 token;
-	int i, old;
+	int i;
 	
 	uint16 crc, crc2;
 	i = 0;
@@ -384,21 +379,14 @@ static int read_data (
 #endif
 		return -1;	/* If not valid data token, return with error */
 	}
-	
-//	dcache_alloc_range((uint32)buff, len);
-	
-	old = irq_disable();
-	
+
 	spi_rec_data(buff, len);
+
 	crc = (uint16)spi_rec_byte() << 8;
 	crc |= (uint16)spi_rec_byte();
-	
-	irq_restore(old);
-	
+
 	crc2 = net_crc16ccitt(buff, len, 0);
-	
-//	dcache_purge_range((uint32)buff, len);
-	
+
 	if(crc != crc2) {
 		errno = EIO;
 		return -1;
@@ -456,10 +444,6 @@ int sdc_read_blocks(uint32 block, size_t count, uint8 *buf) {
 		(void)spi_rec_byte();			/* Idle (Release DO) */
 		if (cnt == 0) break;
 	}
-	
-//#ifdef SD_DEBUG
-//	dbglog(DBG_DEBUG, "%s: retry = %d (MAX=%d) cnt = %d\n", __func__, retry, MAX_RETRY, cnt);
-//#endif
 
 	if((retry >= MAX_RETRY || cnt > 0)) {
 		errno = EIO;
@@ -477,26 +461,21 @@ static int write_data (
 {
 	uint8 resp;
 	uint16 crc;
-	int old;
 
 	if (wait_ready() != 0xFF) 
 		return -1;
 
 	spi_send_byte(token);	 /* Xmit data token */
-	
+
 	if (token != 0xFD) {	/* Is data token */
-	
+
 		dcache_pref_range((uint32)buff, 512);
 		crc = net_crc16ccitt(buff, 512, 0);
-		
-		old = irq_disable();
-		
+
 		spi_send_data(buff, 512);
 		spi_send_byte((uint8)(crc >> 8));
 		spi_send_byte((uint8)crc);
-		
-		irq_restore(old);
-		
+
 		resp = spi_rec_byte();				/* Reсeive data response */
 		
 		if ((resp & 0x1F) != 0x05) {		/* If not accepted, return with error */
@@ -507,7 +486,6 @@ static int write_data (
 			return -1;
 		}
 	}
-	
 	return 0;
 }
 
@@ -564,11 +542,7 @@ int sdc_write_blocks(uint32 block, size_t count, const uint8 *buf) {
 		(void)spi_rec_byte();			/* Idle (Release DO) */
 		if (cnt == 0) break;
 	}
-	
-//#ifdef SD_DEBUG
-//	dbglog(DBG_DEBUG, "%s: retry = %d (MAX=%d) cnt = %d\n", __func__, retry, MAX_RETRY, cnt);
-//#endif
-	
+
 	if((retry >= MAX_RETRY || cnt > 0)) {
 		errno = EIO;
 		return -1;
@@ -579,18 +553,18 @@ int sdc_write_blocks(uint32 block, size_t count, const uint8 *buf) {
 
 
 uint64 sdc_get_size(void) {
-	
+
 	uint8 csd[16];
 	int exponent;
 	uint64 rv = 0;
-	
+
 	if(!initted) {
 		errno = ENXIO;
 		return (uint64)-1;
 	}
-	
+
 	SELECT();
-	
+
 	if(send_cmd(CMD9, 0)) {
 		rv = (uint64)-1;
 		errno = EIO;
@@ -683,7 +657,6 @@ int sdc_print_ident(void) {
 	dbglog(DBG_DEBUG, "Product serial number    : %" PRIu32 "\n", SD_MMC_CID_GET_PSN(cid));
 	dbglog(DBG_DEBUG, "Manufacturing date       : %" PRIu8 "\n",  SD_MMC_CID_GET_MDT(cid));
 	dbglog(DBG_DEBUG, "7-bit CRC checksum       : %" PRIu8 "\n",  SD_MMC_CID_GET_CRC7(cid));
-
 
 out:
 	DESELECT();
@@ -815,3 +788,28 @@ int sdc_blockdev_for_partition(int partition, kos_blockdev_t *rv,
     return 0;
 }
 
+int sdc_blockdev_for_device(kos_blockdev_t *rv) {
+    sd_devdata_t *ddata;
+
+    if(!initted) {
+        errno = ENXIO;
+        return -1;
+    }
+
+    if(!rv) {
+        errno = EFAULT;
+        return -1;
+    }
+
+    /* Allocate the device data */
+    if(!(ddata = (sd_devdata_t *)malloc(sizeof(sd_devdata_t)))) {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    ddata->start_block = 0;
+    ddata->block_count = (sdc_get_size() / 512);
+    rv->dev_data = ddata;
+
+    return 0;
+}
