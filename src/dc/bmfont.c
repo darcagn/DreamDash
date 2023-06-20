@@ -25,7 +25,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
     // TODO: fix empty "charset"
     if (sscanf(lineBuf,
                "info face=\"%[^\"]\" size=%d bold=%d italic=%d charset=\"%[^\"]\" unicode=%d stretchH=%d smooth=%d aa=%d padding=%d,%d,%d,%d spacing=%d,%d outline=%d\n",
-               &bmFont->info.face, &bmFont->info.size, &bmFont->info.bold, &bmFont->info.italic, &bmFont->info.charset,
+               (char *) &bmFont->info.face, &bmFont->info.size, &bmFont->info.bold, &bmFont->info.italic, (char *) &bmFont->info.charset,
                &bmFont->info.unicode, &bmFont->info.stretchH, &bmFont->info.smooth, &bmFont->info.aa,
                &bmFont->info.padding[0], &bmFont->info.padding[1], &bmFont->info.padding[2], &bmFont->info.padding[3],
                &bmFont->info.spacing[0], &bmFont->info.spacing[1], &bmFont->info.outline) != 16) {
@@ -60,7 +60,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
         free(lineBuf);
         return -1;
     }
-    if (sscanf(lineBuf, "page id=%d file=\"%[^\"]\"\n", &bmFont->page.id, &bmFont->page.file) != 2) {
+    if (sscanf(lineBuf, "page id=%d file=\"%[^\"]\"\n", &bmFont->page.id, (char *) &bmFont->page.file) != 2) {
         fclose(fd);
         free(lineBuf);
         printf("sscanf failed on page\n");

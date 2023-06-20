@@ -192,7 +192,7 @@ int setup_syscalls() {
             dcache_flush_range(0x8c000000, fd_size);
             icache_flush_range(0x8c000000, fd_size);
             //dbgio_dev_select("fb");
-            *((uint32 *) &sc) = *((uint32 *) 0x8c0000b0);
+            sc = (int (*)(int, int, int, int)) 0x8c0000b0;
             if (sc(0, 0, 0, 0)) {
                 dbglog(DBG_ERROR, "Error in sysinfo syscall\n");
                 return -1;
