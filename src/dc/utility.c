@@ -29,8 +29,9 @@ void get_dir(List *list, const char *path) {
                 continue;
             }
 
-            if (strncmp(ent->name, "pty", 3) == 0 || strncmp(ent->name, "ram", 3) == 0
-                || strncmp(ent->name, "pc", 2) == 0 || strncmp(ent->name, "cd", 2) == 0) {
+            if (strncmp(ent->name, "dev", 3) == 0 || strncmp(ent->name, "pty", 3) == 0
+                || strncmp(ent->name, "ram", 3) == 0 || strncmp(ent->name, "pc", 2) == 0
+                || strncmp(ent->name, "cd", 2) == 0) {
                 continue;
             }
 
