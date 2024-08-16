@@ -20,10 +20,9 @@
 #include <dc/fs_dcload.h>
 #include "drivers/spi.h"
 #include "drivers/sh7750_regs.h"
-#include "retrolog.h"
 
 #define _NO_VIDEO_H
-//#include "console.h"
+#include "retrodream.h"
 
 #ifdef DEBUG
 	#define SPI_DEBUG
@@ -624,25 +623,25 @@ uint8 spi_slow_sr_byte(register uint8 b) {
 #endif
 
 	for (cnt = 0; cnt < 8; cnt++) {
-		
+
 		pwork = b & MSB ? (pwork | SCSPTR2_SPB2DT) : (pwork & ~SCSPTR2_SPB2DT);
 		reg_write_16(SCSPTR2, pwork);
-		
+
 		spi_low_speed_delay();
 		pwork |= SCSPTR2_CTSDT;
 		reg_write_16(SCSPTR2, pwork);
 		b = (b << 1) | RX_BIT();
 		spi_low_speed_delay();
-		
+
 		pwork &= ~SCSPTR2_CTSDT;
 		reg_write_16(SCSPTR2, pwork);
 	}
-	
+
 #ifdef SPI_DEBUG_RW
 	dbglog(DBG_DEBUG, "spi_slow_sr_byte: receive: %02x\n", b);
 	//dump_regs();
 #endif
-	
+
 	return b;
 }
 
@@ -665,12 +664,12 @@ void spi_send_data(const uint8* data, uint16 len) {
 	register uint8 b;
 	register uint16 _pwork;
 	_pwork = pwork;
-	
+
 	/* Used send/receive byte because only receive works unstable */
-	while(len) {
-		
+	for(; len > 0; len -= 4) {
+
 		b = data[0];
-		
+
 		TX_BIT();
 		CTS_ON_FAST();			/* SPI clock ON */
 		b = (b << 1) | RX_BIT();	/* SPI data input */
@@ -703,9 +702,9 @@ void spi_send_data(const uint8* data, uint16 len) {
 		CTS_ON_FAST();			/* SPI clock ON */
 		b = (b << 1) | RX_BIT();	/* SPI data input */
 		CTS_OFF();					/* SPI clock OFF */
-	
+
 		b = data[1];
-		
+
 		TX_BIT();
 		CTS_ON_FAST();			/* SPI clock ON */
 		b = (b << 1) | RX_BIT();	/* SPI data input */
@@ -738,9 +737,9 @@ void spi_send_data(const uint8* data, uint16 len) {
 		CTS_ON_FAST();			/* SPI clock ON */
 		b = (b << 1) | RX_BIT();	/* SPI data input */
 		CTS_OFF();					/* SPI clock OFF */
-		
+
 		b = data[2];
-		
+
 		TX_BIT();
 		CTS_ON_FAST();			/* SPI clock ON */
 		b = (b << 1) | RX_BIT();	/* SPI data input */
@@ -773,9 +772,9 @@ void spi_send_data(const uint8* data, uint16 len) {
 		CTS_ON_FAST();			/* SPI clock ON */
 		b = (b << 1) | RX_BIT();	/* SPI data input */
 		CTS_OFF();					/* SPI clock OFF */
-		
+
 		b = data[3];
-		
+
 		TX_BIT();
 		CTS_ON_FAST();			/* SPI clock ON */
 		b = (b << 1) | RX_BIT();	/* SPI data input */
@@ -808,9 +807,8 @@ void spi_send_data(const uint8* data, uint16 len) {
 		CTS_ON_FAST();			/* SPI clock ON */
 		b = (b << 1) | RX_BIT();	/* SPI data input */
 		CTS_OFF();					/* SPI clock OFF */
-		
+
 		data += 4;
-		len -= 4;
 	}
 }
 
@@ -828,139 +826,120 @@ void spi_cc_rec_data(uint8* buffer, uint16 len) {
 }
 
 void spi_rec_data(uint8* buffer, uint16 len) {
-	
-	register uint8 b;
-	register uint16 _pwork;
-//	register uint32 tmp __asm__("r1");
-	_pwork = pwork;
-	
-	while(len) {
-		
-//		tmp = 0;
-		b = 0xff;
-		
-		TX_BIT();
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		
+	uint8 b = 0xff;
+	uint16 cts_off = (pwork & ~SCSPTR2_CTSDT) | SCSPTR2_SPB2DT;
+	uint16 cts_on = (pwork | SCSPTR2_CTSDT | SCSPTR2_SPB2DT);
+
+	reg_write_16(SCSPTR2, cts_off);
+
+	for(; len > 0; len -= 4) {
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+
 		buffer[0] = b;
-//		tmp |= b;
-		b = 0xff;
-		
-		TX_BIT();
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		
+
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+
 		buffer[1] = b;
-//		tmp |= b << 8;
-		b = 0xff;
-		
-		TX_BIT();
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		
+
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+
 		buffer[2] = b;
-//		tmp |= b << 16;
-		b = 0xff;
-		
-		TX_BIT();
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		CTS_ON_FAST();			/* SPI clock ON */
-		b = (b << 1) | RX_BIT();	/* SPI data input */
-		CTS_OFF();					/* SPI clock OFF */
-		
+
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+		reg_write_16(SCSPTR2, cts_on);	/* SPI clock ON */
+		b = (b << 1) | RX_BIT();		/* SPI data input */
+		reg_write_16(SCSPTR2, cts_off);	/* SPI clock OFF */
+
 		buffer[3] = b;
-//		tmp |= b << 24;
-//		__asm__ __volatile__("mov r1, r0\nmovca.l r0, @%0\n" : : "r" ((uint32)buffer));
-//		*(uint32*)buffer = tmp;
-		
 		buffer += 4;
-		len -= 4;
 	}
 }
