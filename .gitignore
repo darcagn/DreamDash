@@ -1,3 +1,5 @@
-cmake-build-*
-.idea*
-
+*.o
+dreamboot.elf
+release/*
+romdisk.img
+romdisk/
