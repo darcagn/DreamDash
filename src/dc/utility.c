@@ -238,8 +238,6 @@ void loader_init() {
         setup_syscalls();
     }
 
-#ifndef __DEBUG_EMU__
     InitIDE();
     InitSDCard();
-#endif
 }
