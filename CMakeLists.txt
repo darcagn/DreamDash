@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
-option(PLATFORM_LINUX "Linux platform target" OFF)
-
 include(toolchain.cmake)
 
 #############
@@ -21,19 +19,12 @@ file(GLOB SOURCES src/*.c)
 set(INCLUDES src src/uthash)
 set(CFLAGS -D__DB_VERSION__="${VERSION}")
 
-if (PLATFORM_LINUX)
-    file(GLOB_RECURSE CROSS_SOURCES src/linux/*.c)
-    list(APPEND SOURCES ${CROSS_SOURCES})
-    list(APPEND CFLAGS -D__LINUX__)
-    set(LDFLAGS SDL2 SDL2_ttf freetype)
-else ()
-    file(GLOB_RECURSE CROSS_SOURCES src/dc/*.c)
-    file(GLOB_RECURSE DS_SOURCES src/ds/*.*)
-    list(APPEND SOURCES ${CROSS_SOURCES} ${DS_SOURCES})
-    list(APPEND INCLUDES src/ds/include src/ds/include/fatfs)
-    list(APPEND CFLAGS -D__DC__)
-    set(LDFLAGS kosext2fs ${KOS_LIBS})
-endif ()
+file(GLOB_RECURSE CROSS_SOURCES src/dc/*.c)
+file(GLOB_RECURSE DS_SOURCES src/ds/*.*)
+list(APPEND SOURCES ${CROSS_SOURCES} ${DS_SOURCES})
+list(APPEND INCLUDES src/ds/include src/ds/include/fatfs)
+list(APPEND CFLAGS -D__DC__)
+set(LDFLAGS kosext2fs ${KOS_LIBS})
 
 #############
 # executable
