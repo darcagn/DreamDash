@@ -1,5 +1,13 @@
-TARGET = dreamboot
-VERSION = 1.1.1
+config_file=Makefile.cfg
+ifneq ("$(wildcard $(config_file))","")
+    include $(config_file)
+else
+    ifneq ("$(wildcard Makefile.default.cfg)","")
+        include Makefile.default.cfg
+    else
+        $(error No configuration file found at $(config_file) or Makefile.default.cfg)
+    endif
+endif
 
 FATFS = src/ds/src/fs/fat
 DRIVERS = src/ds/src/drivers
@@ -13,7 +21,12 @@ OBJS = src/main.o src/menu.o src/disc.o src/retrolog.o src/utility.o \
 	$(FATFS)/option/ccsbcs.o $(FATFS)/option/syscall.o \
 	$(UTILS)/../exec.o $(UTILS)/memcpy.o $(UTILS)/memset.o
 
-KOS_CFLAGS += -D__DB_VERSION__="$(VERSION)" -Isrc -Isrc/ds/include -Isrc/ds/include/fatfs
+KOS_CFLAGS += -D__DB_VERSION__="$(VERSION)"
+ifneq ($(AUTOBOOT),0)
+    KOS_CFLAGS += -DAUTOBOOT
+endif
+
+KOS_CFLAGS += -Isrc -Isrc/ds/include -Isrc/ds/include/fatfs
 
 KOS_ROMDISK_DIR = romdisk
 

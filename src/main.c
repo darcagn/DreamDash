@@ -22,12 +22,16 @@ int main(int argc, char **argv) {
     loader_init();
     disc_init();
 
+#ifdef AUTOBOOT
     if (keys & INPUT_START) {
         menu_run();
     } else {
         try_boot();
         menu_run();
     }
+#else
+    menu_run();
+#endif
 
     draw_exit();
 
