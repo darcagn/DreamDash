@@ -7,6 +7,7 @@
 #include "input.h"
 #include "utility.h"
 #include "drawing.h"
+#include "disc.h"
 
 int main(int argc, char **argv) {
 
@@ -19,6 +20,7 @@ int main(int argc, char **argv) {
 
     draw_init();
     loader_init();
+    disc_init();
 
     if (keys & INPUT_START) {
         menu_run();

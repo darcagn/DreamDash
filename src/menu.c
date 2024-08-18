@@ -11,6 +11,7 @@
 #include "drawing.h"
 #include "utility.h"
 #include "menu.h"
+#include "disc.h"
 
 static char dreamboot_version[MAX_PATH];
 static int menu_id = MENU_MAIN;
@@ -56,6 +57,7 @@ static void menu_init() {
     menu_main_add_item("FILE BROWSER", MENU_FILER);
     menu_main_add_item("DCLOAD SERIAL", MENU_DCLOAD_SERIAL);
     menu_main_add_item("DCLOAD IP", MENU_DCLOAD_IP);
+    menu_main_add_item("PLAY DISC", MENU_DISC);
     menu_main_add_item("VIEW LOGS", MENU_LOGS);
 
     sprintf(dreamboot_version, "DREAMBOOT v%s @ CPASJUSTE", __DB_VERSION__);
@@ -217,6 +219,10 @@ static int menu_input() {
                     list_index = 0;
                     highlight_index = 0;
                     menu_id = MENU_LOGS;
+                } else if (item->type == MENU_DISC) {
+                    if (ip_info != NULL) {
+                        disc_launch();
+                    }
                 } else if (item->type == MENU_DCLOAD_IP) {
                     dc_load_ip();
                 } else if (item->type == MENU_DCLOAD_SERIAL) {

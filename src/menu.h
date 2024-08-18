@@ -10,6 +10,7 @@ enum Menu {
     MENU_FILER,
     MENU_DCLOAD_SERIAL,
     MENU_DCLOAD_IP,
+    MENU_DISC,
     MENU_LOGS
 };
 

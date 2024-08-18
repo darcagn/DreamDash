@@ -5,13 +5,13 @@ FATFS = src/ds/src/fs/fat
 DRIVERS = src/ds/src/drivers
 UTILS = src/ds/src/utils
 
-OBJS = src/main.o src/menu.o src/retrolog.o src/utility.o \
+OBJS = src/main.o src/menu.o src/disc.o src/retrolog.o src/utility.o \
 	src/dc/bmfont.o src/dc/descramble.o src/dc/drawing.o \
 	src/dc/dreamfs.o src/dc/input.o src/dc/utility.o \
 	$(DRIVERS)/rtc.o $(DRIVERS)/sd.o $(DRIVERS)/spi.o \
 	$(FATFS)/../fs.o $(FATFS)/ff.o $(FATFS)/dc.o $(FATFS)/utils.o \
 	$(FATFS)/option/ccsbcs.o $(FATFS)/option/syscall.o \
-	$(UTILS)/memcpy.o $(UTILS)/memset.o
+	$(UTILS)/../exec.o $(UTILS)/memcpy.o $(UTILS)/memset.o
 
 KOS_CFLAGS += -D__DB_VERSION__="$(VERSION)" -Isrc -Isrc/ds/include -Isrc/ds/include/fatfs
 
@@ -45,7 +45,7 @@ $(TARGET).bin: $(TARGET).elf
 	scramble release/$(TARGET).bin release/1ST_READ.BIN
 
 $(TARGET).cdi: $(TARGET).elf
-	mkdcdisc --author $(TARGET) -e $(TARGET).elf --no-mr -n $(TARGET)-$(VERSION) -r 20230625 -o release/$(TARGET).cdi
+	mkdcdisc --author $(TARGET) -e $(TARGET).elf --no-mr -n $(TARGET)-$(VERSION) -r 20240818 -o release/$(TARGET).cdi
 
 bios: $(TARGET).bios
 $(TARGET).bios: $(TARGET).bin
