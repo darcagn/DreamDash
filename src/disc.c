@@ -8,8 +8,12 @@
 */
 
 #include <kos.h>
+#include <stdlib.h>
+#include <zlib/zlib.h>
 #include "disc.h"
 #include "retrolog.h"
+
+#define RUNGZ_SIZE 65280
 
 ip_meta_t *ip_info;
 static void *bios_patch;
@@ -138,24 +142,24 @@ int disc_init(void) {
     // TODO: Check if GD-ROM drive is available is available
     // If not, dbglog(DBG_INFO, "No GD-ROM drive found."); return -1;
 
-    file_t fd = fs_open("/rd/rungd.bin", O_RDONLY);
+    gzFile rungz = gzopen("/rd/rungd.bin.gz", "rb");
 
-    if(fd < 0) {
-        dbglog(DBG_ERROR, "Cannot open rungd.bin from romdisk!\n");
+    if(!rungz) {
+        dbglog(DBG_INFO, "Error opening rungd.bin.gz!");
         return -1;
     }
 
-    size_t size = fs_total(fd);
-	 bios_patch = memalign(32, size);
-
-    if(!bios_patch) {
-        dbglog(DBG_ERROR, "Error loading rungd.bin!\n");
-        fs_close(fd);
+    if(!(bios_patch = memalign(32, RUNGZ_SIZE))) {
+        dbglog(DBG_INFO, "Error allocating bios_patch!");
         return -1;
     }
 
-    fs_read(fd, bios_patch, size);
-    fs_close(fd);
+    if(gzread(rungz, bios_patch, RUNGZ_SIZE) != RUNGZ_SIZE) {
+        dbglog(DBG_INFO, "Error decompressing rungd.bin.gz!");
+        return -1;
+    }
+
+    gzclose(rungz);
 
     check_gdrom_thd = thd_create(1, check_gdrom, NULL);
 

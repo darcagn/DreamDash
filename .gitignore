@@ -1,5 +1,7 @@
 *.o
 dreamboot.elf
-release/*
+kos/
+kos-ports/
+release/
 romdisk.img
 romdisk/
