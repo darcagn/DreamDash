@@ -35,10 +35,25 @@ typedef struct vec2_t {
 } Vec2;
 
 #define COL_WHITE       (Color) {255, 255, 255, 255}
-#define COL_BLUE        (Color) {54, 70, 93, 255}
-#define COL_RED         (Color) {255, 81, 72, 255}
-#define COL_BLUE_LIGHT  (Color) {178, 226, 249, 255}
-#define COL_YELLOW      (Color) {240, 226, 107, 255}
+
+#define COL_BLUE               (Color) {54, 70, 93, 255}
+#define COL_BLUE_LIGHT         (Color) {178, 226, 249, 255}
+#define COL_BLUE_TRANS         (Color) {54, 70, 93, 128}
+
+#define COL_RED                (Color) {255, 81, 72, 255}
+#define COL_RED_TRANS          (Color) {255, 81, 72, 64}
+
+#define COL_YELLOW             (Color) {240, 226, 107, 255}
+
+#define COL_TRUE_BLUE          (Color) {0, 0, 255, 255}
+#define COL_TRUE_BLUE_TRANS1   (Color) {0, 0, 255, 96}
+#define COL_TRUE_BLUE_TRANS2   (Color) {0, 0, 255, 128}
+
+#define COL_GREEN              (Color) {0, 255, 0, 255}
+#define COL_GREEN_TRANS        (Color) {0, 255, 0, 64}
+
+#define COL_BLACK_TRANS1       (Color) {0, 0, 0, 128}
+#define COL_BLACK_TRANS2       (Color) {0, 0, 0, 96}
 
 void back_init();
 

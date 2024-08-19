@@ -11,7 +11,7 @@
 
 int main(int argc, char **argv) {
 
-    uint32 keys = get_input();
+    uint32_t keys = get_input();
     if (keys & INPUT_A && keys & INPUT_B) {
         dc_load_serial();
     } else if (keys & INPUT_X && keys & INPUT_Y) {

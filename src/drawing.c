@@ -79,12 +79,12 @@ static void draw_init_font() {
     tex_header_t hdr;
 
     // parse BMFont font information
-    if (bmf_parse("/rd/future.fnt", &bmf_font) != 0) {
+    if (bmf_parse("/rd/ebdragon.fnt", &bmf_font) != 0) {
         return;
     }
 
     // load "texconv" texture
-    fp = fopen("/rd/future_0.tex", "r");
+    fp = fopen("/rd/ebdragon.tex", "r");
     if (fp == NULL) {
         return;
     }

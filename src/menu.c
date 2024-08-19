@@ -55,11 +55,11 @@ static void menu_init() {
     }
 
     // build main menu
-    menu_main_add_item("FILE BROWSER", MENU_FILER);
-    menu_main_add_item("DCLOAD SERIAL", MENU_DCLOAD_SERIAL);
-    menu_main_add_item("DCLOAD IP", MENU_DCLOAD_IP);
-    menu_main_add_item("PLAY DISC", MENU_DISC);
-    menu_main_add_item("VIEW LOGS", MENU_LOGS);
+    menu_main_add_item("File Browser", MENU_FILER);
+    menu_main_add_item("dcload-ip", MENU_DCLOAD_IP);
+    menu_main_add_item("dcload-serial", MENU_DCLOAD_SERIAL);
+    menu_main_add_item("Play Disc", MENU_DISC);
+    menu_main_add_item("View Logs", MENU_LOGS);
 
     sprintf(dreamboot_version, "DREAMBOOT v%s @ CPASJUSTE", __DB_VERSION__);
 }
@@ -88,20 +88,11 @@ static void menu_draw_main() {
 
     List *list = &menuList;
 
-    Rect topRect = (Rect) {menuRect.left + 80, menuRect.top + 48,
-                           menuRect.width - 320, DRAW_FONT_HEIGHT + 16};
-
-    Rect mainRect = (Rect) {topRect.left, topRect.top + topRect.height + 16,
-                            topRect.width, (DRAW_FONT_HEIGHT + DRAW_FONT_LINE_SPACING + 2) * (float) list->size};
-
-    draw_box_outline(topRect.left, topRect.top, topRect.width, topRect.height,
-                     100, COL_BLUE, COL_YELLOW, 4);
-
-    draw_string(topRect.left + 70, topRect.top + (topRect.height / 2) - (DRAW_FONT_HEIGHT / 2) + 2,
-                103, COL_RED, list->path);
+    Rect mainRect = (Rect) {menuRect.left + 30, menuRect.top + 30,
+                            menuRect.width - 380, (DRAW_FONT_HEIGHT + DRAW_FONT_LINE_SPACING + 2) * (float) list->size};
 
     draw_box_outline(mainRect.left, mainRect.top, mainRect.width, mainRect.height,
-                     100, COL_BLUE, COL_RED, 4);
+                     100, COL_BLACK_TRANS1, COL_BLACK_TRANS2, 4);
 
     for (int i = 0; i < (unsigned int) line_max; i++) {
 
@@ -110,7 +101,7 @@ static void menu_draw_main() {
             if (i == highlight_index) {
                 draw_box_outline(mainRect.left, mainRect.top + ((float) (i * line_height)),
                                  mainRect.width, (float) line_height,
-                                 102, COL_RED, COL_WHITE, 2);
+                                 102, COL_TRUE_BLUE, COL_WHITE, 2);
             }
 
             ListItem *item = get_item(list, list_index + i);
@@ -124,7 +115,7 @@ static void menu_draw_main() {
 
     // version
     draw_string(16, draw_get_screen_size().y - DRAW_FONT_HEIGHT - 16,
-                103, COL_RED, "DREAMBOOT BOOTLOADER v"__DB_VERSION__ " @ CPASJUSTE");
+                103, COL_TRUE_BLUE, "Dreamboot BIOS v"__DB_VERSION__);
 }
 
 static void menu_draw() {
@@ -137,11 +128,11 @@ static void menu_draw() {
     List *list = menu_get_list();
 
     draw_box_outline(pathRect.left, pathRect.top, pathRect.width, pathRect.height,
-                     100, COL_BLUE, COL_YELLOW, 4);
-    draw_string(pathRect.left + 4, pathRect.top + (DRAW_FONT_LINE_SPACING / 2) + 6, 103, COL_RED, list->path);
+                     100, COL_BLACK_TRANS1, COL_BLACK_TRANS2, 4);
+    draw_string(pathRect.left + 4, pathRect.top + (DRAW_FONT_LINE_SPACING / 2) + 6, 103, COL_TRUE_BLUE, list->path);
 
     draw_box_outline(filerRect.left, filerRect.top, filerRect.width, filerRect.height,
-                     100, COL_BLUE, COL_RED, 4);
+                     100, COL_BLACK_TRANS1, COL_BLACK_TRANS2, 4);
 
     for (int i = 0; i < (unsigned int) line_max; i++) {
 
@@ -150,7 +141,7 @@ static void menu_draw() {
             if (menu_id == MENU_FILER && i == highlight_index) {
                 draw_box_outline(filerRect.left, filerRect.top + ((float) (i * line_height)),
                                  filerRect.width, (float) line_height,
-                                 102, COL_RED, COL_WHITE, 2);
+                                 102, COL_TRUE_BLUE, COL_WHITE, 2);
             }
 
             ListItem *item = get_item(list, list_index + i);
