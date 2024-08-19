@@ -2,7 +2,7 @@
 // Created by cpasjuste on 28/01/2020.
 //
 
-#include "retrodream.h"
+#include <kos.h>
 #include "menu.h"
 #include "input.h"
 #include "utility.h"
@@ -18,9 +18,10 @@ int main(int argc, char **argv) {
         dc_load_ip();
     }
 
+    disc_init();
     draw_init();
     loader_init();
-    disc_init();
+    back_init();
 
 #ifdef AUTOBOOT
     if (keys & INPUT_START) {

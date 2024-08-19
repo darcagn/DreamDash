@@ -49,7 +49,6 @@ void arch_shutdown();
 int flashrom_get_region_only();
 int is_hacked_bios();
 int is_custom_bios();
-int is_no_syscalls();
 
 uint32 gzip_get_file_size(const char *filename);
 

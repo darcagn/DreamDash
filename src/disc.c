@@ -11,7 +11,8 @@
 #include <stdlib.h>
 #include <zlib/zlib.h>
 #include "disc.h"
-#include "retrolog.h"
+#include "log.h"
+#include "utility.h"
 
 #define RUNGZ_SIZE 65280
 
@@ -140,30 +141,13 @@ void disc_shutdown(void) {
 
 int disc_init(void) {
     // TODO: Check if GD-ROM drive is available is available
-    // If not, dbglog(DBG_INFO, "No GD-ROM drive found."); return -1;
+    // If not, dash_log(DBG_INFO, "No GD-ROM drive found."); return -1;
 
-    gzFile rungz = gzopen("/rd/rungd.bin.gz", "rb");
-
-    if(!rungz) {
-        dbglog(DBG_INFO, "Error opening rungd.bin.gz!");
-        return -1;
-    }
-
-    if(!(bios_patch = memalign(32, RUNGZ_SIZE))) {
-        dbglog(DBG_INFO, "Error allocating bios_patch!");
-        return -1;
-    }
-
-    if(gzread(rungz, bios_patch, RUNGZ_SIZE) != RUNGZ_SIZE) {
-        dbglog(DBG_INFO, "Error decompressing rungd.bin.gz!");
-        return -1;
-    }
-
-    gzclose(rungz);
+    bios_patch = decompress_file_aligned("/rd/rungd.bin.gz", 32, RUNGZ_SIZE);
 
     check_gdrom_thd = thd_create(1, check_gdrom, NULL);
 
-    dbglog(DBG_INFO, "GD-ROM initialized.");
+    dash_log(DBG_INFO, "GD-ROM initialized.");
 
     return 0;
 }

@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include "retrolog.h"
+#include "log.h"
 
 /* For CRC16-CCITT */
 #include <kos/net.h>
@@ -137,7 +137,7 @@ static uint8 send_cmd (
 
 	if (wait_ready() != 0xFF) {
 #ifdef SD_DEBUG
-		dbglog(DBG_DEBUG, "%s: CMD 0x%02x wait ready error\n", __func__, cmd);
+		dash_log(DBG_DEBUG, "%s: CMD 0x%02x wait ready error\n", __func__, cmd);
 #endif
 		return 0xFF;
 	}
@@ -168,7 +168,7 @@ static uint8 send_cmd (
 	} while ((res & 0x80) && --n);
 	
 #ifdef SD_DEBUG
-	dbglog(DBG_DEBUG, "%s: CMD 0x%02x response 0x%02x\n", __func__, cmd, res);
+	dash_log(DBG_DEBUG, "%s: CMD 0x%02x response 0x%02x\n", __func__, cmd, res);
 #endif
 
 	return res;			/* Return with the response value */
@@ -196,7 +196,7 @@ static uint8 send_slow_cmd (
 	
 	if (res != 0xff) {
 #ifdef SD_DEBUG
-		dbglog(DBG_DEBUG, "%s: CMD 0x%02x error\n", __func__, cmd);
+		dash_log(DBG_DEBUG, "%s: CMD 0x%02x error\n", __func__, cmd);
 #endif
 		return(0xff);
 	}
@@ -226,7 +226,7 @@ static uint8 send_slow_cmd (
 	} while ((res & 0x80) && --n);
 	
 #ifdef SD_DEBUG
-	dbglog(DBG_DEBUG, "%s: CMD 0x%02x response 0x%02x\n", __func__, cmd, res);
+	dash_log(DBG_DEBUG, "%s: CMD 0x%02x response 0x%02x\n", __func__, cmd, res);
 #endif
 	
 	return res; /* Return with the response value */
@@ -257,7 +257,7 @@ int sdc_init(void) {
 	if (send_slow_cmd(CMD0, 0) == 1) {			/* Enter Idle state */
 
 #ifdef SD_DEBUG
-		dbglog(DBG_DEBUG, "%s: Enter Idle state\n", __func__);
+		dash_log(DBG_DEBUG, "%s: Enter Idle state\n", __func__);
 #endif
 		timer_spin_sleep(20);
 		
@@ -320,7 +320,7 @@ int sdc_init(void) {
 	send_slow_cmd(CMD59, 1);		// crc check
 	
 #ifdef SD_DEBUG
-	dbglog(DBG_DEBUG, "%s: card type = 0x%02x\n", __func__, ty & 0xff);
+	dash_log(DBG_DEBUG, "%s: card type = 0x%02x\n", __func__, ty & 0xff);
 #endif
 
 	if(!(ty & 4)) {
@@ -375,7 +375,7 @@ static int read_data (
 
 	if(token != 0xFE) {
 #ifdef SD_DEBUG
-		dbglog(DBG_DEBUG, "%s: not valid data token: %02x\n", __func__, token);
+		dash_log(DBG_DEBUG, "%s: not valid data token: %02x\n", __func__, token);
 #endif
 		return -1;	/* If not valid data token, return with error */
 	}
@@ -404,7 +404,7 @@ int sdc_read_blocks(uint32 block, size_t count, uint8 *buf) {
 	}
 	
 #ifdef SD_DEBUG
-	dbglog(DBG_DEBUG, "%s: block=%ld count=%d\n", __func__, block, count);
+	dash_log(DBG_DEBUG, "%s: block=%ld count=%d\n", __func__, block, count);
 #endif
 
 	uint8 *p;
@@ -479,7 +479,7 @@ static int write_data (
 		
 		if ((resp & 0x1F) != 0x05) {		/* If not accepted, return with error */
 #ifdef SD_DEBUG
-			dbglog(DBG_DEBUG, "%s: not accepted: %02x\n", __func__, resp);
+			dash_log(DBG_DEBUG, "%s: not accepted: %02x\n", __func__, resp);
 #endif
 			errno = EIO;
 			return -1;
@@ -497,7 +497,7 @@ int sdc_write_blocks(uint32 block, size_t count, const uint8 *buf) {
 	}
 	
 #ifdef SD_DEBUG
-	dbglog(DBG_DEBUG, "%s: block=%ld count=%d\n", __func__, block, count);
+	dash_log(DBG_DEBUG, "%s: block=%ld count=%d\n", __func__, block, count);
 #endif
 	
 	uint8 cnt, *p;
@@ -640,10 +640,10 @@ int sdc_print_ident(void) {
 		goto out;
 	}
 
-//	dbglog(DBG_DEBUG, "*** Card Identification ***\n");
-	dbglog(DBG_DEBUG, "Manufacturer ID          : %" PRIu8 "\n",  SD_MMC_CID_GET_MID(cid));
-	dbglog(DBG_DEBUG, "OEM/Application ID       : %" PRIu16 "\n", SD_MMC_CID_GET_OID(cid));
-	dbglog(DBG_DEBUG,
+//	dash_log(DBG_DEBUG, "*** Card Identification ***\n");
+	dash_log(DBG_DEBUG, "Manufacturer ID          : %" PRIu8 "\n",  SD_MMC_CID_GET_MID(cid));
+	dash_log(DBG_DEBUG, "OEM/Application ID       : %" PRIu16 "\n", SD_MMC_CID_GET_OID(cid));
+	dash_log(DBG_DEBUG,
 	"Product name             : %c%c%c%c%c%c\n",
 		SD_MMC_CID_GET_PNM(cid, 0),
 		SD_MMC_CID_GET_PNM(cid, 1),
@@ -652,10 +652,10 @@ int sdc_print_ident(void) {
 		SD_MMC_CID_GET_PNM(cid, 4),
 		SD_MMC_CID_GET_PNM(cid, 5)
 	);
-	dbglog(DBG_DEBUG, "Product revision         : %" PRIu8 "\n",  SD_MMC_CID_GET_PRV(cid));
-	dbglog(DBG_DEBUG, "Product serial number    : %" PRIu32 "\n", SD_MMC_CID_GET_PSN(cid));
-	dbglog(DBG_DEBUG, "Manufacturing date       : %" PRIu8 "\n",  SD_MMC_CID_GET_MDT(cid));
-	dbglog(DBG_DEBUG, "7-bit CRC checksum       : %" PRIu8 "\n",  SD_MMC_CID_GET_CRC7(cid));
+	dash_log(DBG_DEBUG, "Product revision         : %" PRIu8 "\n",  SD_MMC_CID_GET_PRV(cid));
+	dash_log(DBG_DEBUG, "Product serial number    : %" PRIu32 "\n", SD_MMC_CID_GET_PSN(cid));
+	dash_log(DBG_DEBUG, "Manufacturing date       : %" PRIu8 "\n",  SD_MMC_CID_GET_MDT(cid));
+	dash_log(DBG_DEBUG, "7-bit CRC checksum       : %" PRIu8 "\n",  SD_MMC_CID_GET_CRC7(cid));
 
 out:
 	DESELECT();
@@ -741,7 +741,7 @@ int sdc_blockdev_for_partition(int partition, kos_blockdev_t *rv,
 
     /* Make sure the partition asked for is sane */
     if(partition < 0 || partition > 3) {
-        dbglog(DBG_DEBUG, "Invalid partition number given: %d\n", partition);
+        dash_log(DBG_DEBUG, "Invalid partition number given: %d\n", partition);
         errno = EINVAL;
         return -1;
     }
@@ -754,7 +754,7 @@ int sdc_blockdev_for_partition(int partition, kos_blockdev_t *rv,
     /* Make sure the SD card uses MBR partitions.
        TODO: Support GPT partitioning at some point. */
     if(buf[0x01FE] != 0x55 || buf[0x1FF] != 0xAA) {
-        dbglog(DBG_DEBUG, "SD card doesn't appear to have a MBR\n");
+        dash_log(DBG_DEBUG, "SD card doesn't appear to have a MBR\n");
         errno = ENOENT;
         return -1;
     }
@@ -764,7 +764,7 @@ int sdc_blockdev_for_partition(int partition, kos_blockdev_t *rv,
     pval = 16 * partition + 0x01BE;
 
     if(buf[pval + 4] == 0) {
-        dbglog(DBG_DEBUG, "Partition %d appears to be empty\n", partition);
+        dash_log(DBG_DEBUG, "Partition %d appears to be empty\n", partition);
         errno = ENOENT;
         return -1;
     }

@@ -49,14 +49,14 @@ static int check_partition(uint8 *buf, int partition) {
 	int pval;
 	
 	if(buf[0x01FE] != 0x55 || buf[0x1FF] != 0xAA) {
-//		dbglog(DBG_DEBUG, "Device doesn't appear to have a MBR\n");
+//		dash_log(DBG_DEBUG, "Device doesn't appear to have a MBR\n");
 		return -1;
 	}
 	
 	pval = 16 * partition + 0x01BE;
 
 	if(buf[pval + 4] == 0) {
-//		dbglog(DBG_DEBUG, "Partition empty: 0x%02x\n", buf[pval + 4]);
+//		dash_log(DBG_DEBUG, "Partition empty: 0x%02x\n", buf[pval + 4]);
 		return -1;
 	}
 	
@@ -66,7 +66,7 @@ static int check_partition(uint8 *buf, int partition) {
 
 int InitSDCard() {
 
-	dbglog(DBG_INFO, "Checking for SD card...\n");
+	dash_log(DBG_INFO, "Checking for SD card...\n");
 	uint8 partition_type;
 	int part = 0, fat_part = 0;
 	char path[8];
@@ -75,20 +75,20 @@ int InitSDCard() {
 
 	if(sdc_init()) {
 		scif_init();
-		dbglog(DBG_INFO, "\nSD card not found.\n");
+		dash_log(DBG_INFO, "\nSD card not found.\n");
 		return -1;
 	}
 
-	dbglog(DBG_INFO, "SD card initialized, capacity %" PRIu32 " MB\n",
+	dash_log(DBG_INFO, "SD card initialized, capacity %" PRIu32 " MB\n",
 		(uint32)(sdc_get_size() / 1024 / 1024));
 
 //	if(sdc_print_ident()) {
-//		dbglog(DBG_INFO, "SD card read CID error\n");
+//		dash_log(DBG_INFO, "SD card read CID error\n");
 //		return -1;
 //	}
 
 	if(sdc_read_blocks(0, 1, buf)) {
-		dbglog(DBG_ERROR, "Can't read MBR from SD card\n");
+		dash_log(DBG_ERROR, "Can't read MBR from SD card\n");
 		return -1;
 	}
 
@@ -116,18 +116,18 @@ int InitSDCard() {
 		/* Check to see if the MBR says that we have a Linux partition. */
 		if(is_ext2_partition(partition_type)) {
 
-			dbglog(DBG_INFO, "Detected EXT2 filesystem on partition %d\n", part);
+			dash_log(DBG_INFO, "Detected EXT2 filesystem on partition %d\n", part);
 
 			if(fs_ext2_init()) {
 
-				dbglog(DBG_INFO, "Could not initialize fs_ext2!\n");
+				dash_log(DBG_INFO, "Could not initialize fs_ext2!\n");
 				dev->shutdown(dev);
 			}
 			else {
-				dbglog(DBG_INFO, "Mounting filesystem...\n");
+				dash_log(DBG_INFO, "Mounting filesystem...\n");
 
 				if(fs_ext2_mount(path, dev, FS_EXT2_MOUNT_READWRITE)) {
-					dbglog(DBG_INFO, "Could not mount device as ext2fs.\n");
+					dash_log(DBG_INFO, "Could not mount device as ext2fs.\n");
 					dev->shutdown(dev);
 				}
 			}
@@ -135,11 +135,11 @@ int InitSDCard() {
 		}
 		else if((fat_part = is_fat_partition(partition_type))) {
 
-			dbglog(DBG_INFO, "Detected FAT%d filesystem on partition %d\n", fat_part, part);
+			dash_log(DBG_INFO, "Detected FAT%d filesystem on partition %d\n", fat_part, part);
 
 			if(fs_fat_init()) {
 
-				dbglog(DBG_INFO, "Could not initialize fs_fat!\n");
+				dash_log(DBG_INFO, "Could not initialize fs_fat!\n");
 				dev->shutdown(dev);
 			}
 			else {
@@ -149,16 +149,16 @@ int InitSDCard() {
 					continue;
 				}
 
-				dbglog(DBG_INFO, "Mounting filesystem...\n");
+				dash_log(DBG_INFO, "Mounting filesystem...\n");
 
 				if(fs_fat_mount(path, dev, NULL, part)) {
-					dbglog(DBG_INFO, "Could not mount device as fatfs.\n");
+					dash_log(DBG_INFO, "Could not mount device as fatfs.\n");
 					dev->shutdown(dev);
 				}
 			}
 		}
 		else {
-			dbglog(DBG_INFO, "Unknown filesystem: 0x%02x\n", partition_type);
+			dash_log(DBG_INFO, "Unknown filesystem: 0x%02x\n", partition_type);
 			dev->shutdown(dev);
 		}
 	}
@@ -168,7 +168,7 @@ int InitSDCard() {
 
 int InitIDE() {
 
-	dbglog(DBG_INFO, "Checking for G1 ATA devices...\n");
+	dash_log(DBG_INFO, "Checking for G1 ATA devices...\n");
 	uint8 partition_type;
 	int part = 0, fat_part = 0;
 	char path[8];
@@ -183,13 +183,13 @@ int InitIDE() {
 	/* Read the MBR from the disk */
 	if(g1_ata_lba_mode()) {
 		if(g1_ata_read_lba(0, 1, (uint16_t *)buf) < 0) {
-			dbglog(DBG_ERROR, "Can't read MBR from IDE by LBA\n");
+			dash_log(DBG_ERROR, "Can't read MBR from IDE by LBA\n");
 			return -1;
 		}
 	}
 	else {
 		if(g1_ata_read_chs(0, 0, 1, 1, (uint16_t *)buf) < 0) {
-			dbglog(DBG_ERROR, "Can't read MBR from IDE by CHS\n");
+			dash_log(DBG_ERROR, "Can't read MBR from IDE by CHS\n");
 			return -1;
 		}
 	}
@@ -221,29 +221,29 @@ int InitIDE() {
 		/* Check to see if the MBR says that we have a EXT2 or FAT partition. */
 		if (is_ext2_partition(partition_type)) {
 
-			dbglog(DBG_INFO, "Detected EXT2 filesystem on partition %d\n", part);
+			dash_log(DBG_INFO, "Detected EXT2 filesystem on partition %d\n", part);
 
 			if (fs_ext2_init()) {
-				dbglog(DBG_INFO, "Could not initialize fs_ext2!\n");
+				dash_log(DBG_INFO, "Could not initialize fs_ext2!\n");
 				dev->shutdown(dev);
 			}
 			else {
 
-				dbglog(DBG_INFO, "Mounting filesystem...\n");
+				dash_log(DBG_INFO, "Mounting filesystem...\n");
 
 				if (fs_ext2_mount(path, dev, FS_EXT2_MOUNT_READWRITE)) {
-					dbglog(DBG_INFO, "Could not mount device as ext2fs.\n");
+					dash_log(DBG_INFO, "Could not mount device as ext2fs.\n");
 					dev->shutdown(dev);
 				}
 			}
 		}
 		else if ((fat_part = is_fat_partition(partition_type))) {
 
-			dbglog(DBG_INFO, "Detected FAT%d filesystem on partition %d\n", fat_part, part);
+			dash_log(DBG_INFO, "Detected FAT%d filesystem on partition %d\n", fat_part, part);
 
 			if (fs_fat_init()) {
 
-				dbglog(DBG_INFO, "Could not initialize fs_fat!\n");
+				dash_log(DBG_INFO, "Could not initialize fs_fat!\n");
 				dev->shutdown(dev);
 
 			}
@@ -259,10 +259,10 @@ int InitIDE() {
 					dev_dma = NULL;
 				}
 
-				dbglog(DBG_INFO, "Mounting filesystem...\n");
+				dash_log(DBG_INFO, "Mounting filesystem...\n");
 
 				if(fs_fat_mount(path, dev, dev_dma, part)) {
-					dbglog(DBG_INFO, "Could not mount device as fatfs.\n");
+					dash_log(DBG_INFO, "Could not mount device as fatfs.\n");
 					dev->shutdown(dev);
 					if (dev_dma) {
 						dev_dma->shutdown(dev_dma);
@@ -271,7 +271,7 @@ int InitIDE() {
 			}
 		}
 		else {
-			dbglog(DBG_INFO, "Unknown filesystem: 0x%02x\n", partition_type);
+			dash_log(DBG_INFO, "Unknown filesystem: 0x%02x\n", partition_type);
 			dev->shutdown(dev);
 		}
 	}
@@ -286,7 +286,7 @@ int InitRomdisk() {
 	char path[32];
 	uint8 *tmpb = (uint8 *)0x00100000;
 	
-	dbglog(DBG_INFO, "Checking for romdisk in the bios...\n");
+	dash_log(DBG_INFO, "Checking for romdisk in the bios...\n");
 	
 	for(addr = 0x00100000; addr < 0x00200000; addr++) {
 
@@ -304,7 +304,7 @@ int InitRomdisk() {
 				continue;
 			}
 
-			dbglog(DBG_INFO, "Detected romdisk at 0x%08lx, mounting...\n", (uint32)tmpb);
+			dash_log(DBG_INFO, "Detected romdisk at 0x%08lx, mounting...\n", (uint32)tmpb);
 
 			if(cnt) {
 				snprintf(path, sizeof(path), "/brd%d", cnt+1);
@@ -313,9 +313,9 @@ int InitRomdisk() {
 			}
 
 			if(fs_romdisk_mount(path, (const uint8 *)tmpb, 0) < 0) {
-				dbglog(DBG_INFO, "Error mounting romdisk at 0x%08lx\n", (uint32)tmpb);
+				dash_log(DBG_INFO, "Error mounting romdisk at 0x%08lx\n", (uint32)tmpb);
 			} else {
-				dbglog(DBG_INFO, "Romdisk mounted as %s\n", path);
+				dash_log(DBG_INFO, "Romdisk mounted as %s\n", path);
 			}
 
 			cnt++;
@@ -369,7 +369,7 @@ int SearchRoot() {
 	hnd = fs_open("/", O_RDONLY | O_DIR);
 
 	if(hnd < 0) {
-		dbglog(DBG_ERROR, "Can't open root directory!\n");
+		dash_log(DBG_ERROR, "Can't open root directory!\n");
 		return -1;
 	}
 
@@ -379,7 +379,7 @@ int SearchRoot() {
 			continue;
 		}
 
-		dbglog(DBG_INFO, "Checking for root directory on /%s\n", ent->name);
+		dash_log(DBG_INFO, "Checking for root directory on /%s\n", ent->name);
 
 		if(SearchRootCheck(ent->name, "/DS", "/lua/startup.lua") ||
 			SearchRootCheck(ent->name, "", "/lua/startup.lua")) {
@@ -391,7 +391,7 @@ int SearchRoot() {
 	fs_close(hnd);
 
 	if (!detected) {
-		dbglog(DBG_ERROR, "Can't find root directory.\n");
+		dash_log(DBG_ERROR, "Can't find root directory.\n");
 		setenv("PATH", "/ram", 1);
 		setenv("TEMP", "/ram", 1);
 		return -1;
@@ -399,7 +399,7 @@ int SearchRoot() {
 
 	if(strncmp(getenv("PATH"), "/pc", 3) && DirExists("/pc")) {
 
-		dbglog(DBG_INFO, "Checking for root directory on /pc\n");
+		dash_log(DBG_INFO, "Checking for root directory on /pc\n");
 
 		if(!SearchRootCheck("pc", "", "/lua/startup.lua")) {
 			SearchRootCheck("pc", "/DS", "/lua/startup.lua");
@@ -414,7 +414,7 @@ int SearchRoot() {
 		setenv("TEMP", "/ram", 1);
 	}
 
-	dbglog(DBG_INFO, "Root directory is %s\n", getenv("PATH"));
-//	dbglog(DBG_INFO, "Temp directory is %s\n", getenv("TEMP"));
+	dash_log(DBG_INFO, "Root directory is %s\n", getenv("PATH"));
+//	dash_log(DBG_INFO, "Temp directory is %s\n", getenv("TEMP"));
 	return 0;
 }

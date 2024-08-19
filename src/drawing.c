@@ -3,7 +3,7 @@
 //
 
 #include <png/png.h>
-#include "retrodream.h"
+#include <string.h>
 #include "drawing.h"
 #include "bmfont.h"
 
@@ -23,18 +23,68 @@ typedef struct {
     int size;
 } tex_header_t;
 
+pvr_ptr_t back_tex;
+
+void back_init(void) {
+    back_tex = pvr_mem_malloc(128 * 128 * 2);
+    png_to_texture("/rd/wallpaper-128.png", back_tex, PNG_NO_ALPHA);
+}
+
+void draw_back(void) {
+    pvr_poly_cxt_t cxt;
+    pvr_poly_hdr_t hdr;
+    pvr_vertex_t vert;
+
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565, 128, 128, back_tex, PVR_FILTER_BILINEAR);
+    pvr_poly_compile(&hdr, &cxt);
+    pvr_prim(&hdr, sizeof(hdr));
+
+    vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
+    vert.oargb = 0;
+    vert.flags = PVR_CMD_VERTEX;
+
+    vert.x = 1;
+    vert.y = 1;
+    vert.z = 1;
+    vert.u = 0.0;
+    vert.v = 0.0;
+    pvr_prim(&vert, sizeof(vert));
+
+    vert.x = 640;
+    vert.y = 1;
+    vert.z = 1;
+    vert.u = 1.0;
+    vert.v = 0.0;
+    pvr_prim(&vert, sizeof(vert));
+
+    vert.x = 1;
+    vert.y = 480;
+    vert.z = 1;
+    vert.u = 0.0;
+    vert.v = 1.0;
+    pvr_prim(&vert, sizeof(vert));
+
+    vert.x = 640;
+    vert.y = 480;
+    vert.z = 1;
+    vert.u = 1.0;
+    vert.v = 1.0;
+    vert.flags = PVR_CMD_VERTEX_EOL;
+    pvr_prim(&vert, sizeof(vert));
+}
+
 static void draw_init_font() {
 
     FILE *fp;
     tex_header_t hdr;
 
     // parse BMFont font information
-    if (bmf_parse(ROMDISK_PATH"/future.fnt", &bmf_font) != 0) {
+    if (bmf_parse("/rd/future.fnt", &bmf_font) != 0) {
         return;
     }
 
     // load "texconv" texture
-    fp = fopen(ROMDISK_PATH"/future_0.tex", "r");
+    fp = fopen("/rd/future_0.tex", "r");
     if (fp == NULL) {
         return;
     }

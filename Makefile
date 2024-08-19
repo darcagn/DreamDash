@@ -15,9 +15,8 @@ FATFS = src/ds/src/fs/fat
 DRIVERS = src/ds/src/drivers
 UTILS = src/ds/src/utils
 
-OBJS = src/main.o src/menu.o src/disc.o src/retrolog.o src/utility.o \
-	src/dc/bmfont.o src/dc/descramble.o src/dc/drawing.o \
-	src/dc/dreamfs.o src/dc/input.o src/dc/utility.o \
+OBJS = src/main.o src/menu.o src/disc.o src/log.o src/utility.o \
+	src/bmfont.o src/descramble.o src/drawing.o src/input.o \
 	$(DRIVERS)/rtc.o $(DRIVERS)/sd.o $(DRIVERS)/spi.o \
 	$(FATFS)/../fs.o $(FATFS)/ff.o $(FATFS)/dc.o $(FATFS)/utils.o \
 	$(FATFS)/option/ccsbcs.o $(FATFS)/option/syscall.o \
@@ -28,9 +27,8 @@ RELEASE_DIR = release
 RESOURCE_DIR = res
 KOS_ROMDISK_DIR = romdisk
 
-ROMDISK_FILES = dcload-ip.bin dcload-serial.bin future.fnt \
-   future_0.tex syscalls.bin
-GZ_ROMDISK_FILES = rungd.bin
+ROMDISK_FILES = future.fnt future_0.tex wallpaper-128.png
+GZ_ROMDISK_FILES = dcload-ip.bin dcload-serial.bin rungd.bin
 
 ## Flags
 KOS_CFLAGS += -Isrc -Isrc/ds/include -Isrc/ds/include/fatfs

@@ -75,7 +75,7 @@ PARTITION VolToPart[16] = {
 
 #ifdef FATFS_DEBUG
 
-#   define DBG(x) dbglog x
+#   define DBG(x) dash_log x
 
 static void put_rc(FRESULT rc, const char *func) {
 	const char *p;
@@ -234,7 +234,7 @@ static void *fat_open(vfs_handler_t * vfs, const char *fn, int flags) {
 	
 	if(mnt == NULL) {
 		FAT_UNLOCK();
-		dbglog(DBG_ERROR, "FATFS: Error, not mounted.\n");
+		dash_log(DBG_ERROR, "FATFS: Error, not mounted.\n");
 		errno = ENOMEM;
 		return NULL;
 	}
@@ -249,7 +249,7 @@ static void *fat_open(vfs_handler_t * vfs, const char *fn, int flags) {
     if(fd >= MAX_FAT_FILES) {
 		errno = ENFILE;
 		FAT_UNLOCK();
-		dbglog(DBG_ERROR, "FATFS: The maximum number of opened files exceeded.\n");
+		dash_log(DBG_ERROR, "FATFS: The maximum number of opened files exceeded.\n");
 		return NULL;
     }
     
@@ -257,7 +257,7 @@ static void *fat_open(vfs_handler_t * vfs, const char *fn, int flags) {
 	rc = f_chdrive(mnt->dev_path);
 
 	if(rc != FR_OK) {
-		dbglog(DBG_ERROR, "FATFS: Error change drive to - %s\n", mnt->dev_path);
+		dash_log(DBG_ERROR, "FATFS: Error change drive to - %s\n", mnt->dev_path);
 		put_rc(rc, __func__);
 		fatfs_set_errno(rc);
 		FAT_UNLOCK();
@@ -514,9 +514,9 @@ static dirent_t *fat_readdir(void * hnd) {
     
 //#ifdef FATFS_DEBUG
 //#if _USE_LFN    
-//    dbglog(DBG_DEBUG, "FATFS: Dir entry = %s %ld\n", (*inf.lfname ? inf.lfname : inf.fname), inf.fsize);
+//    dash_log(DBG_DEBUG, "FATFS: Dir entry = %s %ld\n", (*inf.lfname ? inf.lfname : inf.fname), inf.fsize);
 //#else
-//    dbglog(DBG_DEBUG, "FATFS: Dir entry = %s %ld\n", inf.fname, inf.fsize);
+//    dash_log(DBG_DEBUG, "FATFS: Dir entry = %s %ld\n", inf.fname, inf.fsize);
 //#endif
 //#endif
 
@@ -1138,12 +1138,12 @@ int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dm
     }
 
 	if(mnt == NULL) {
-		dbglog(DBG_ERROR, "FATFS: The maximum number of mounts exceeded.\n");
+		dash_log(DBG_ERROR, "FATFS: The maximum number of mounts exceeded.\n");
 		goto error;
 	}
 
 	if(dev_pio->init(dev_pio) < 0) {
-		dbglog(DBG_ERROR, "FATFS: Can't initialize block device for PIO: %d\n", errno);
+		dash_log(DBG_ERROR, "FATFS: Can't initialize block device for PIO: %d\n", errno);
 		goto error;
 	}
 
@@ -1151,7 +1151,7 @@ int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dm
 	mnt->dev_dma = dev_dma;
 
 	if(dev_dma && dev_dma->init(dev_dma) < 0) {
-		dbglog(DBG_ERROR, "FATFS: Can't initialize block device for DMA: %d\n", errno);
+		dash_log(DBG_ERROR, "FATFS: Can't initialize block device for DMA: %d\n", errno);
 		mnt->dev_dma = NULL;
 	}
 
@@ -1160,7 +1160,7 @@ int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dm
 
 	/* Create a VFS structure */
 	if(!(mnt->vfsh = (vfs_handler_t *)malloc(sizeof(vfs_handler_t)))) {
-		dbglog(DBG_ERROR, "FATFS: Out of memory for creating vfs handler\n");
+		dash_log(DBG_ERROR, "FATFS: Out of memory for creating vfs handler\n");
 		goto error;
 	}
 
@@ -1170,7 +1170,7 @@ int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dm
 
 	/* Create a FATFS structure */
 	if(!(mnt->fs = (FATFS *)malloc(sizeof(FATFS)))) {
-		dbglog(DBG_ERROR, "FATFS: Out of memory for creating FATFS native mount structure\n");
+		dash_log(DBG_ERROR, "FATFS: Out of memory for creating FATFS native mount structure\n");
 		goto error;
 	}
 
@@ -1179,7 +1179,7 @@ int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dm
 
 	if(rc != FR_OK) {
 		fatfs_set_errno(rc);
-		dbglog(DBG_ERROR, "FATFS: Error %d in mounting a logical drive %d\n", errno, mnt->dev_id);
+		dash_log(DBG_ERROR, "FATFS: Error %d in mounting a logical drive %d\n", errno, mnt->dev_id);
 #ifdef FATFS_DEBUG
 		put_rc(rc, __func__);
 #endif
@@ -1189,7 +1189,7 @@ int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dm
 	if(mnt->dev_dma) {
 		DBG((DBG_DEBUG, "FATFS: Allocating %d bytes for DMA buffer\n", mnt->fs->csize * _MAX_SS));
 		if(!(mnt->dmabuf = (uint8 *)memalign(32, mnt->fs->csize * _MAX_SS))) {
-			dbglog(DBG_ERROR, "FATFS: Out of memory for DMA buffer\n");
+			dash_log(DBG_ERROR, "FATFS: Out of memory for DMA buffer\n");
 		} else {
 			DBG((DBG_DEBUG, "FATFS: Allocated %d bytes for DMA buffer at %p\n",
 				mnt->fs->csize * _MAX_SS, mnt->dmabuf));
@@ -1205,7 +1205,7 @@ int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dm
 	fre_sect = fre_clust * fs->csize;
 
 	if (rc == FR_OK) {
-		dbglog(DBG_DEBUG, "FATFS: %i MB / %i MB.\n",
+		dash_log(DBG_DEBUG, "FATFS: %i MB / %i MB.\n",
 			(int) (((float) fre_sect / 2) * 0.001024f),
 			(int) (((float) tot_sect / 2) * 0.001024f));
 	}
@@ -1216,7 +1216,7 @@ int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dm
 
     /* Register with the VFS */
     if(nmmgr_handler_add(&mnt->vfsh->nmmgr)) {
-		dbglog(DBG_ERROR, "FATFS: Couldn't add vfs to nmmgr\n");
+		dash_log(DBG_ERROR, "FATFS: Couldn't add vfs to nmmgr\n");
 		goto error;
     }
 

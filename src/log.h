@@ -5,8 +5,6 @@
 #ifndef DREAMBOOT_RETROLOG_H
 #define DREAMBOOT_RETROLOG_H
 
-void retro_log(int level, const char *fmt, ...);
-
-#define dbglog(lv, fmt, ...) retro_log(lv, fmt, ##__VA_ARGS__)
+void dash_log(int level, const char *fmt, ...);
 
 #endif //DREAMBOOT_RETROLOG_H

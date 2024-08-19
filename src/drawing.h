@@ -40,6 +40,10 @@ typedef struct vec2_t {
 #define COL_BLUE_LIGHT  (Color) {178, 226, 249, 255}
 #define COL_YELLOW      (Color) {240, 226, 107, 255}
 
+void back_init();
+
+void draw_back();
+
 void draw_init();
 
 void draw_exit();

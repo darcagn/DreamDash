@@ -2,11 +2,12 @@
 // Created by cpasjuste on 28/01/2020.
 //
 
+#include <kos.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "uthash/utlist.h"
-#include "retrodream.h"
-#include "retrolog.h"
+#include "log.h"
 #include "input.h"
 #include "drawing.h"
 #include "utility.h"
@@ -87,7 +88,7 @@ static void menu_draw_main() {
 
     List *list = &menuList;
 
-    Rect topRect = (Rect) {menuRect.left + 160, menuRect.top + 96,
+    Rect topRect = (Rect) {menuRect.left + 80, menuRect.top + 48,
                            menuRect.width - 320, DRAW_FONT_HEIGHT + 16};
 
     Rect mainRect = (Rect) {topRect.left, topRect.top + topRect.height + 16,
@@ -286,6 +287,8 @@ void menu_run() {
         draw_start();
 
         menu_draw();
+
+        draw_back();
 
         draw_end();
     }

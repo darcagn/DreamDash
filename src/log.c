@@ -6,14 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "retrodream.h"
 #include "uthash/utlist.h"
 #include "utility.h"
 #include "drawing.h"
 
 List logList = {NULL, 0, "LOGS"};
 
-void retro_log(int level, const char *fmt, ...) {
+void dash_log(int level, const char *fmt, ...) {
 
     ListItem *item;
     va_list args;

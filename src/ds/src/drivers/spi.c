@@ -20,9 +20,9 @@
 #include <dc/fs_dcload.h>
 #include "drivers/spi.h"
 #include "drivers/sh7750_regs.h"
+#include "log.h"
 
 #define _NO_VIDEO_H
-#include "retrodream.h"
 
 #ifdef DEBUG
 	#define SPI_DEBUG
@@ -69,7 +69,7 @@ static void dump_regs() {
 	pwork = reg_read_16(SCSPTR2);
 	gpio = reg_read_32(PCTRA);
 	
-	dbglog(DBG_DEBUG, "SCIF registers: \n"
+	dash_log(DBG_DEBUG, "SCIF registers: \n"
 					" SCSCR2:  %04x\n"
 					" SCSMR2:  %04x\n"
 					" SCFCR2:  %04x\n"
@@ -91,7 +91,7 @@ static void dump_regs() {
 					(int)(pwork & SCSPTR2_CTSDT),
 					(int)(pwork & SCSPTR2_RTSDT));
 
-	dbglog(DBG_DEBUG, "GPIO registers: \n"
+	dash_log(DBG_DEBUG, "GPIO registers: \n"
 					" GPIOIC:  %08lx\n"
 					" PDTRA:   %08lx\n"
 					" PCTRA:   %08lx\n\n", 
@@ -112,7 +112,7 @@ static void dump_regs() {
 		}
 	}
 	
-	dbglog(DBG_DEBUG, "%s\n", gpios);
+	dash_log(DBG_DEBUG, "%s\n", gpios);
 	
 }
 
@@ -131,7 +131,7 @@ int spi_init(int use_gpio) {
 	}
 	
     if(*DCLOADMAGICADDR == DCLOADMAGICVALUE && dcload_type == DCLOAD_TYPE_SER) {
-        dbglog(DBG_KDEBUG, "scif_spi_init: no spi device -- using "
+        dash_log(DBG_KDEBUG, "scif_spi_init: no spi device -- using "
                "dcload-serial\n");
         return -1;
     }
@@ -224,7 +224,7 @@ int spi_shutdown() {
 void spi_set_delay(int delay) {
 	spi_delay = delay;
 #ifdef SPI_DEBUG
-	dbglog(DBG_DEBUG, "spi_set_delay: %d\n", spi_delay);
+	dash_log(DBG_DEBUG, "spi_set_delay: %d\n", spi_delay);
 #endif
 }
 
@@ -281,7 +281,7 @@ void spi_cs_on(int cs) {
 	}
 	
 #ifdef SPI_DEBUG
-	dbglog(DBG_DEBUG, "spi_cs_on: %d\n", cs);
+	dash_log(DBG_DEBUG, "spi_cs_on: %d\n", cs);
 #endif
 }
 
@@ -311,7 +311,7 @@ void spi_cs_off(int cs) {
 //	mutex_unlock(&spi_mutex);
 	
 #ifdef SPI_DEBUG
-	dbglog(DBG_DEBUG, "spi_cs_off: %d\n", cs);
+	dash_log(DBG_DEBUG, "spi_cs_off: %d\n", cs);
 #endif
 }
 
@@ -360,7 +360,7 @@ void spi_cc_send_byte(register uint8 b) {
 	CTS_OFF();		/* SPI clock OFF */
 	
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_send_byte: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_send_byte: %02x\n", b);
 	//dump_regs();
 #endif
 }
@@ -404,7 +404,7 @@ void spi_send_byte(register uint8 b) {
 	CTS_OFF();				/* SPI clock OFF */
 	
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_send_byte: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_send_byte: %02x\n", b);
 	//dump_regs();
 #endif
 }
@@ -450,7 +450,7 @@ uint8 spi_cc_rec_byte() {
 	CTS_OFF();			/* SPI clock OFF */
 	
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_rec_byte: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_rec_byte: %02x\n", b);
 	//dump_regs();
 #endif
 
@@ -492,7 +492,7 @@ uint8 spi_rec_byte() {
 	CTS_OFF();					/* SPI clock OFF */
 	
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_rec_byte: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_rec_byte: %02x\n", b);
 	//dump_regs();
 #endif
 
@@ -512,7 +512,7 @@ uint8 spi_cc_sr_byte(register uint8 b) {
 	_pwork = pwork;
 	
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_sr_byte: send: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_sr_byte: send: %02x\n", b);
 	//dump_regs();
 #endif
 
@@ -550,7 +550,7 @@ uint8 spi_cc_sr_byte(register uint8 b) {
 	CTS_OFF();			/* SPI clock OFF */
 
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_sr_byte: receive: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_sr_byte: receive: %02x\n", b);
 	//dump_regs();
 #endif
 
@@ -563,7 +563,7 @@ uint8 spi_sr_byte(register uint8 b) {
 	_pwork = pwork;
 	
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_sr_byte: send: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_sr_byte: send: %02x\n", b);
 	//dump_regs();
 #endif
 
@@ -601,7 +601,7 @@ uint8 spi_sr_byte(register uint8 b) {
 	CTS_OFF();					/* SPI clock OFF */
 
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_sr_byte: receive: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_sr_byte: receive: %02x\n", b);
 	//dump_regs();
 #endif
 
@@ -619,7 +619,7 @@ uint8 spi_slow_sr_byte(register uint8 b) {
 	
 	register int cnt;
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_slow_sr_byte: send: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_slow_sr_byte: send: %02x\n", b);
 #endif
 
 	for (cnt = 0; cnt < 8; cnt++) {
@@ -638,7 +638,7 @@ uint8 spi_slow_sr_byte(register uint8 b) {
 	}
 
 #ifdef SPI_DEBUG_RW
-	dbglog(DBG_DEBUG, "spi_slow_sr_byte: receive: %02x\n", b);
+	dash_log(DBG_DEBUG, "spi_slow_sr_byte: receive: %02x\n", b);
 	//dump_regs();
 #endif
 

@@ -42,6 +42,10 @@ void try_boot();
 
 char *read_file(const char *file, int *size);
 
+void *decompress_file_aligned(const char *file, int alignment, int output_size);
+
+void *decompress_file(const char *file, int output_size);
+
 void exec(const char *path);
 
 int is_hacked_bios();
