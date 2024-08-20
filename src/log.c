@@ -1,7 +1,3 @@
-//
-// Created by cpasjuste on 05/02/2020.
-//
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

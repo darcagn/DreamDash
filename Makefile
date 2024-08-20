@@ -34,7 +34,7 @@ GZ_ROMDISK_FILES = dcload-ip.bin dcload-serial.bin rungd.bin
 ## Flags
 KOS_CFLAGS += -Isrc -Isrc/ds/include -Isrc/ds/include/fatfs
 KOS_CFLAGS += -DWALLPAPER_FILE="$(WALLPAPER_FILE)" -DWALLPAPER_RES=$(WALLPAPER_RES)
-KOS_CFLAGS += -D__DB_VERSION__="$(VERSION)"
+KOS_CFLAGS += -DDASH_VERSION="$(VERSION)"
 ifneq ($(AUTOBOOT),0)
     KOS_CFLAGS += -DAUTOBOOT
 endif

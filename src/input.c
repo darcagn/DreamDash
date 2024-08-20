@@ -1,7 +1,3 @@
-//
-// Created by cpasjuste on 03/02/2020.
-//
-
 #include <kos.h>
 
 static uint32 last_buttons = 0;

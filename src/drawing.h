@@ -1,7 +1,3 @@
-//
-// Created by cpasjuste on 28/01/2020.
-//
-
 #ifndef LOADER_DRAWING_H
 #define LOADER_DRAWING_H
 

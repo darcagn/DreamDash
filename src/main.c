@@ -1,7 +1,3 @@
-//
-// Created by cpasjuste on 28/01/2020.
-//
-
 #include <kos.h>
 #include "menu.h"
 #include "input.h"

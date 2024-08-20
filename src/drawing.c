@@ -1,7 +1,3 @@
-//
-// Created by cpasjuste on 28/01/2020.
-//
-
 #include <png/png.h>
 #include <string.h>
 #include "drawing.h"

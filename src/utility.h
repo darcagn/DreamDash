@@ -1,7 +1,3 @@
-//
-// Created by cpasjuste on 28/01/2020.
-//
-
 #ifndef LOADER_UTILITY_H
 #define LOADER_UTILITY_H
 

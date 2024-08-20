@@ -1,7 +1,3 @@
-//
-// Created by cpasjuste on 03/02/2020.
-//
-
 #ifndef LOADER_INPUT_H
 #define LOADER_INPUT_H
 

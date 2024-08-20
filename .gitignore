@@ -1,5 +1,5 @@
 *.o
-dreamboot.elf
+dreamdash.elf
 kos/
 kos-ports/
 release/

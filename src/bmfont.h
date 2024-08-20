@@ -1,7 +1,3 @@
-//
-// Created by cpasjuste on 12/02/2020.
-//
-
 #ifndef BMFONTLIB_BMFONT_H
 #define BMFONTLIB_BMFONT_H
 

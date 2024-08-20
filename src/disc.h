@@ -1,5 +1,5 @@
-#ifndef DREAMBOOT_DISC_H
-#define DREAMBOOT_DISC_H
+#ifndef DREAMDASH_DISC_H
+#define DREAMDASH_DISC_H
 
 typedef struct ip_meta {
 	char hardware_ID[16];
@@ -28,4 +28,4 @@ int disc_init(void);
 void disc_shutdown(void);
 void disc_launch(void);
 
-#endif //DREAMBOOT_DISC_H
+#endif //DREAMDASH_DISC_H

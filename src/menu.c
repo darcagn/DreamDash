@@ -1,7 +1,3 @@
-//
-// Created by cpasjuste on 28/01/2020.
-//
-
 #include <kos.h>
 #include <string.h>
 #include <stdio.h>
@@ -14,7 +10,6 @@
 #include "menu.h"
 #include "disc.h"
 
-static char dreamboot_version[MAX_PATH];
 static int menu_id = MENU_MAIN;
 static int line_height = 0;
 static int line_max = 0;
@@ -66,8 +61,6 @@ static void menu_init() {
     menu_main_add_item("dcload-serial", MENU_DCLOAD_SERIAL);
     menu_main_add_item("Play Disc", MENU_DISC);
     menu_main_add_item("View Logs", MENU_LOGS);
-
-    sprintf(dreamboot_version, "DREAMBOOT v%s @ CPASJUSTE", __DB_VERSION__);
 }
 
 static void menu_get_dir(char *path) {
@@ -121,7 +114,7 @@ static void menu_draw_main() {
 
     // version
     draw_string(16, draw_get_screen_size().y - DRAW_FONT_HEIGHT - 16,
-                103, COL_TRUE_BLUE, "Dreamboot BIOS v"__DB_VERSION__);
+                103, COL_TRUE_BLUE, "DreamDash BIOS v"DASH_VERSION);
 }
 
 static void menu_draw() {
