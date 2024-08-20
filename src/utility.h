@@ -60,9 +60,13 @@ void descramble(uint8 *source, uint8 *dest, uint32 size);
 
 int setup_syscalls();
 
-void dc_load_serial();
+void launch_retrodream();
 
-void dc_load_ip();
+void launch_dreamshell();
+
+void launch_dcload_serial();
+
+void launch_dcload_ip();
 
 void loader_init();
 

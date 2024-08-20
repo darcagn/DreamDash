@@ -76,18 +76,10 @@ void try_boot() {
     }
 
     // then retrodream.bin
-    if (file_exists("/sd/RD/retrodream.bin")) {
-        exec("/sd/RD/retrodream.bin");
-    } else if (file_exists("/ide/RD/retrodream.bin")) {
-        exec("/ide/RD/retrodream.bin");
-    }
+    launch_retrodream();
 
     // finally check for DS_CORE.BIN
-    if (file_exists("/sd/DS/DS_CORE.BIN")) {
-        exec("/sd/DS/DS_CORE.BIN");
-    } else if (file_exists("/ide/DS/DS_CORE.BIN")) {
-        exec("/ide/DS/DS_CORE.BIN");
-    }
+    launch_dreamshell();
 }
 
 void trim(char *str) {
@@ -311,14 +303,27 @@ void exec_gz(const char *path, size_t size) {
     arch_exec(bin, size);
 }
 
-void dc_load_serial(void) {
-
-    exec_gz("/rd/dcload-serial.bin.gz", 15776);
-
+void launch_retrodream(void) {
+    if (file_exists("/sd/RD/retrodream.bin")) {
+        exec("/sd/RD/retrodream.bin");
+    } else if (file_exists("/ide/RD/retrodream.bin")) {
+        exec("/ide/RD/retrodream.bin");
+    }
 }
 
-void dc_load_ip(void) {
+void launch_dreamshell(void) {
+    if (file_exists("/sd/DS/DS_CORE.BIN")) {
+        exec("/sd/DS/DS_CORE.BIN");
+    } else if (file_exists("/ide/DS/DS_CORE.BIN")) {
+        exec("/ide/DS/DS_CORE.BIN");
+    }
+}
 
+void launch_dcload_serial(void) {
+    exec_gz("/rd/dcload-serial.bin.gz", 15776);
+}
+
+void launch_dcload_ip(void) {
     exec_gz("/rd/dcload-ip.bin.gz", 23736);
 }
 

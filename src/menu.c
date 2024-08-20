@@ -55,6 +55,12 @@ static void menu_init() {
     }
 
     // build main menu
+    if (file_exists("/sd/RD/retrodream.bin") || file_exists("/ide/RD/retrodream.bin")) {
+        menu_main_add_item("RetroDream", MENU_RETRODREAM);
+    }
+    if (file_exists("/sd/DS/DS_CORE.BIN") || file_exists("/ide/DS/DS_CORE.BIN")) {
+        menu_main_add_item("DreamShell", MENU_DREAMSHELL);
+    }
     menu_main_add_item("File Browser", MENU_FILER);
     menu_main_add_item("dcload-ip", MENU_DCLOAD_IP);
     menu_main_add_item("dcload-serial", MENU_DCLOAD_SERIAL);
@@ -215,10 +221,14 @@ static int menu_input() {
                     if (ip_info != NULL) {
                         disc_launch();
                     }
+                } else if (item->type == MENU_RETRODREAM) {
+                    launch_retrodream();
+                } else if (item->type == MENU_DREAMSHELL) {
+                    launch_dreamshell();
                 } else if (item->type == MENU_DCLOAD_IP) {
-                    dc_load_ip();
+                    launch_dcload_ip();
                 } else if (item->type == MENU_DCLOAD_SERIAL) {
-                    dc_load_serial();
+                    launch_dcload_serial();
                 }
             }
         }

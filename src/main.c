@@ -13,9 +13,9 @@ int main(int argc, char **argv) {
 
     uint32_t keys = get_input();
     if (keys & INPUT_A && keys & INPUT_B) {
-        dc_load_serial();
+        launch_dcload_serial();
     } else if (keys & INPUT_X && keys & INPUT_Y) {
-        dc_load_ip();
+        launch_dcload_ip();
     }
 
     disc_init();
