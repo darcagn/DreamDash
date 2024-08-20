@@ -205,7 +205,7 @@ int InitIDE() {
 		if(check_partition(buf, part)) {
 			continue;
 		}
-		if(g1_ata_blockdev_for_partition(part, 0, dev, &partition_type)) {
+		if(g1_ata_blockdev_for_partition(part, 1, dev, &partition_type)) {
 			continue;
 		}
 
