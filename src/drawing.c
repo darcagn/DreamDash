@@ -26,8 +26,8 @@ typedef struct {
 pvr_ptr_t back_tex;
 
 void back_init(void) {
-    back_tex = pvr_mem_malloc(128 * 128 * 2);
-    png_to_texture("/rd/wallpaper-128.png", back_tex, PNG_NO_ALPHA);
+    back_tex = pvr_mem_malloc(WALLPAPER_RES * WALLPAPER_RES * 2);
+    png_to_texture("/rd/"WALLPAPER_FILE, back_tex, PNG_NO_ALPHA);
 }
 
 void draw_back(void) {
@@ -35,7 +35,7 @@ void draw_back(void) {
     pvr_poly_hdr_t hdr;
     pvr_vertex_t vert;
 
-    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565, 128, 128, back_tex, PVR_FILTER_BILINEAR);
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565, WALLPAPER_RES, WALLPAPER_RES, back_tex, PVR_FILTER_BILINEAR);
     pvr_poly_compile(&hdr, &cxt);
     pvr_prim(&hdr, sizeof(hdr));
 

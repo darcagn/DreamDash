@@ -27,11 +27,13 @@ RELEASE_DIR = release
 RESOURCE_DIR = res
 KOS_ROMDISK_DIR = romdisk
 
-ROMDISK_FILES = ebdragon.fnt ebdragon.tex wallpaper-128.png
+WALLPAPER_FILE = $(WALLPAPER_SHADE)-wall-$(WALLPAPER_RES).png
+ROMDISK_FILES = ebdragon.fnt ebdragon.tex $(WALLPAPER_FILE)
 GZ_ROMDISK_FILES = dcload-ip.bin dcload-serial.bin rungd.bin
 
 ## Flags
 KOS_CFLAGS += -Isrc -Isrc/ds/include -Isrc/ds/include/fatfs
+KOS_CFLAGS += -DWALLPAPER_FILE="$(WALLPAPER_FILE)" -DWALLPAPER_RES=$(WALLPAPER_RES)
 KOS_CFLAGS += -D__DB_VERSION__="$(VERSION)"
 ifneq ($(AUTOBOOT),0)
     KOS_CFLAGS += -DAUTOBOOT
