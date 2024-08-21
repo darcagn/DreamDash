@@ -128,6 +128,13 @@ void disc_launch(void) {
     kill_gdrom_thd = 1;
     thd_join(check_gdrom_thd, NULL);
 
+    bios_patch = decompress_file_aligned("/rd/rungd.bin.gz", 32, RUNGZ_SIZE);
+
+    if(!bios_patch) {
+        dash_log(DBG_ERROR, "Error with BIOS patch!");
+        return;
+    }
+
     gdplay_run_game(bios_patch);
 }
 
@@ -143,7 +150,9 @@ int disc_init(void) {
     // TODO: Check if GD-ROM drive is available is available
     // If not, dash_log(DBG_INFO, "No GD-ROM drive found."); return -1;
 
-    bios_patch = decompress_file_aligned("/rd/rungd.bin.gz", 32, RUNGZ_SIZE);
+    if(!file_exists("/rd/rungd.bin.gz")) {
+        dash_log(DBG_ERROR, "Error accessing rungd.bin.gz!");
+    }
 
     check_gdrom_thd = thd_create(1, check_gdrom, NULL);
 

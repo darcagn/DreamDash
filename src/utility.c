@@ -213,18 +213,18 @@ void *decompress_file_aligned(const char *file, int alignment, int output_size) 
     gzFile gzfile = gzopen(file, "rb");
 
     if(!gzfile) {
-        dash_log(DBG_INFO, "Error opening %s!", file);
+        dash_log(DBG_ERROR, "Error opening %s!", file);
         return NULL;
     }
 
-    void *buffer = NULL;
-    if(posix_memalign(&buffer, alignment, output_size)) {
-        dash_log(DBG_INFO, "Error in posix_memalign!");
+    void *buffer = memalign(alignment, output_size);
+    if(!buffer) {
+        dash_log(DBG_ERROR, "Error in memalign!");
         return NULL;
     }
 
     if(gzread(gzfile, buffer, output_size) != output_size) {
-        dash_log(DBG_INFO, "Error decompressing %s!", file);
+        dash_log(DBG_ERROR, "Error decompressing %s!", file);
         return NULL;
     }
 
