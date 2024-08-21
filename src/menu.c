@@ -162,7 +162,7 @@ static void menu_draw() {
 
 static int menu_input() {
 
-    uint32 input = get_input();
+    uint32_t input = get_input();
     List *list = menu_get_list();
 
     if (input & INPUT_QUIT) {
@@ -267,7 +267,7 @@ static int menu_input() {
 
 void menu_run() {
 
-    uint32 input = 0;
+    uint32_t input = 0;
 
     menu_init();
 

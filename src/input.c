@@ -1,8 +1,8 @@
 #include <kos.h>
 
-static uint32 last_buttons = 0;
+static uint32_t last_buttons = 0;
 
-uint32 get_input() {
+uint32_t get_input() {
 
     maple_device_t *cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
     if (cont == NULL) {

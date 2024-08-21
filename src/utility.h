@@ -52,7 +52,7 @@ int is_no_syscalls();
 
 int flash_get_region();
 
-void descramble(uint8 *source, uint8 *dest, uint32 size);
+void descramble(uint8_t *source, uint8_t *dest, uint32_t size);
 
 int setup_syscalls();
 

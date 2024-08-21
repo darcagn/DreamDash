@@ -14,6 +14,6 @@
 #define INPUT_Y     CONT_Y
 #define INPUT_START CONT_START
 
-uint32 get_input();
+uint32_t get_input();
 
 #endif //LOADER_INPUT_H

@@ -240,8 +240,8 @@ void *decompress_file(const char *file, int output_size) {
 int flash_get_region() {
 
     int start, size;
-    uint8 region[6] = {0};
-    region[2] = *(uint8 *) 0x0021A002;
+    uint8_t region[6] = {0};
+    region[2] = *(uint8_t *) 0x0021A002;
 
     /* Find the partition */
     if (flashrom_info(FLASHROM_PT_SYSTEM, &start, &size) < 0) {
@@ -266,11 +266,11 @@ int flash_get_region() {
 }
 
 int is_hacked_bios() {
-    return (*(uint16 *) 0xa0000000) == 0xe6ff;
+    return (*(uint16_t *) 0xa0000000) == 0xe6ff;
 }
 
 int is_custom_bios() {
-    return (*(uint16 *) 0xa0000004) == 0x4318;
+    return (*(uint16_t *) 0xa0000004) == 0x4318;
 }
 
 void exec(const char *path) {
