@@ -169,7 +169,7 @@ static int menu_input() {
         return INPUT_QUIT;
     }
 
-    if (input & INPUT_UP) {
+    if (input & CONT_DPAD_UP) {
         if (highlight_index <= line_max / 2 && list_index > 0) {
             list_index--;
         } else {
@@ -184,7 +184,7 @@ static int menu_input() {
                 }
             }
         }
-    } else if (input & INPUT_DOWN) {
+    } else if (input & CONT_DPAD_DOWN) {
         if (highlight_index >= line_max / 2) {
             list_index++;
             if (list_index + highlight_index >= list->size) {
@@ -200,7 +200,7 @@ static int menu_input() {
     }
 
     if (menu_id == MENU_MAIN) {
-        if (input & INPUT_A) {
+        if (input & CONT_A) {
             ListItem *item = get_item(list, list_index + highlight_index);
             if (item != NULL) {
                 if (item->type == MENU_FILER) {
@@ -226,13 +226,13 @@ static int menu_input() {
             }
         }
     } else if (menu_id == MENU_LOGS) {
-        if (input & INPUT_B) {
+        if (input & CONT_B) {
             list_index = 0;
             highlight_index = 0;
             menu_id = MENU_MAIN;
         }
     } else if (menu_id == MENU_FILER) {
-        if (input & INPUT_A) {
+        if (input & CONT_A) {
             ListItem *file = get_item(list, list_index + highlight_index);
             if (file != NULL) {
                 if (file->type == TYPE_DIR) {
@@ -241,7 +241,7 @@ static int menu_input() {
                     exec(file->path);
                 }
             }
-        } else if (input & INPUT_B) {
+        } else if (input & CONT_B) {
             if (strlen(list->path) > 1) {
                 char *pos = strrchr(list->path, '/');
                 if (pos != NULL) {

@@ -10,9 +10,9 @@ int main(int argc, char **argv) {
     dash_log(DBG_INFO, "%s", kos_get_banner());
 
     uint32_t keys = get_input();
-    if (keys & INPUT_A && keys & INPUT_B) {
+    if (keys & CONT_A && keys & CONT_B) {
         launch_dcload_serial();
-    } else if (keys & INPUT_X && keys & INPUT_Y) {
+    } else if (keys & CONT_X && keys & CONT_Y) {
         launch_dcload_ip();
     }
 
@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
     back_init();
 
 #ifdef AUTOBOOT
-    if (keys & INPUT_START) {
+    if (keys & CONT_START) {
         menu_run();
     } else {
         try_boot();
