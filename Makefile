@@ -10,6 +10,8 @@ else
     endif
 endif
 
+HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
+
 ## Objects
 FATFS = src/ds/src/fs/fat
 DRIVERS = src/ds/src/drivers
@@ -80,7 +82,11 @@ $(TARGET).bin: release-dir $(TARGET).elf
 	$(KOS_BASE)/utils/scramble/scramble release/$(TARGET).bin release/1ST_READ.BIN
 
 $(TARGET).cdi: release-dir $(TARGET).elf
+ifneq ($(HAVE_MKDCDISC),)
 	mkdcdisc --author $(TARGET) -e $(TARGET).elf --no-mr -n $(TARGET)-$(VERSION) -r 20240818 -o release/$(TARGET).cdi
+else
+	$(info mkdcdisc utility not found in PATH. Skipping CDI generation.)
+endif
 
 bios: $(TARGET).bios
 $(TARGET).bios: release-dir $(TARGET).bin
