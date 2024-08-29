@@ -36,6 +36,7 @@ DreamDash is a replacement BIOS for Dreamcast power users and developers. It req
     - BIOS files with `devkit` use the devkit bootup intro
     - BIOS files with `nogdrom` are used on consoles with no GD-ROM drive installed (**currently untested!**)
     - BIOS files with `32mb` are used on consoles with 32MB RAM modification
+- Use DreamShell's BIOS Flasher application to write the `.bios` file to a Dreamcast's writeable BIOS flashROM.
  
 ## Acknowledgements
 - **KallistiOS** and **DreamShell** - kernel and drivers for the underlying operating system
