@@ -77,7 +77,7 @@ $(TARGET).bin: release-dir $(TARGET).elf
 	$(KOS_OBJCOPY) -R .stack -O binary $(TARGET).elf release/$(TARGET).bin
 
 1ST_READ.BIN: release-dir $(TARGET).bin
-	scramble release/$(TARGET).bin release/1ST_READ.BIN
+	$(KOS_BASE)/utils/scramble/scramble release/$(TARGET).bin release/1ST_READ.BIN
 
 $(TARGET).cdi: release-dir $(TARGET).elf
 	mkdcdisc --author $(TARGET) -e $(TARGET).elf --no-mr -n $(TARGET)-$(VERSION) -r 20240818 -o release/$(TARGET).cdi
