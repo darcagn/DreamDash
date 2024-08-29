@@ -4,8 +4,10 @@
 #include "utility.h"
 #include "drawing.h"
 #include "disc.h"
+#include "log.h"
 
 int main(int argc, char **argv) {
+    dash_log(DBG_INFO, "%s", kos_get_banner());
 
     uint32_t keys = get_input();
     if (keys & INPUT_A && keys & INPUT_B) {
