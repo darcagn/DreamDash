@@ -44,18 +44,6 @@ void *decompress_file(const char *file, int output_size);
 
 void exec(const char *path);
 
-int is_hacked_bios();
-
-int is_custom_bios();
-
-int is_no_syscalls();
-
-int flash_get_region();
-
-void descramble(uint8_t *source, uint8_t *dest, uint32_t size);
-
-int setup_syscalls();
-
 void launch_retrodream();
 
 void launch_dreamshell();
@@ -63,8 +51,6 @@ void launch_dreamshell();
 void launch_dcload_serial();
 
 void launch_dcload_ip();
-
-void loader_init();
 
 void trim(char *str);
 

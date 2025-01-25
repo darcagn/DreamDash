@@ -2,13 +2,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "uthash/utlist.h"
-#include "log.h"
-#include "input.h"
-#include "drawing.h"
-#include "utility.h"
-#include "menu.h"
+
 #include "disc.h"
+#include "drawing.h"
+#include "input.h"
+#include "log.h"
+#include "menu.h"
+#include "utility.h"
+#include "utlist.h"
 
 static int menu_id = MENU_MAIN;
 static int line_height = 0;

@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zlib/zlib.h>
+
 #include "drawing.h"
-#include "fs.h"
-#include "uthash/utlist.h"
 #include "utility.h"
+#include "utlist.h"
 
 KOS_INIT_FLAGS(INIT_DEFAULT);
 
@@ -209,7 +209,7 @@ char *read_file(const char *file, int *size) {
     return buffer;
 }
 
-void *decompress_file_aligned(const char *file, int alignment, int output_size) {
+void *decompress_file(const char *file, int output_size) {
     gzFile gzfile = gzopen(file, "rb");
 
     if(!gzfile) {
@@ -217,7 +217,7 @@ void *decompress_file_aligned(const char *file, int alignment, int output_size) 
         return NULL;
     }
 
-    void *buffer = memalign(alignment, output_size);
+    void *buffer = malloc(output_size);
     if(!buffer) {
         dash_log(DBG_ERROR, "Error in memalign!");
         return NULL;
@@ -231,46 +231,6 @@ void *decompress_file_aligned(const char *file, int alignment, int output_size) 
     gzclose(gzfile);
 
     return buffer;
-}
-
-void *decompress_file(const char *file, int output_size) {
-    return decompress_file_aligned(file, 8, output_size);
-}
-
-int flash_get_region() {
-
-    int start, size;
-    uint8_t region[6] = {0};
-    region[2] = *(uint8_t *) 0x0021A002;
-
-    /* Find the partition */
-    if (flashrom_info(FLASHROM_PT_SYSTEM, &start, &size) < 0) {
-        dash_log(DBG_ERROR, "%s: can't find partition %d\n", __func__, FLASHROM_PT_SYSTEM);
-    } else {
-        /* Read the first 5 characters of that partition */
-        if (flashrom_read(start, region, 5) < 0) {
-            dash_log(DBG_ERROR, "%s: can't read partition %d\n", __func__, FLASHROM_PT_SYSTEM);
-        }
-    }
-
-    if (region[2] == 0x58 || region[2] == 0x30) {
-        return FLASHROM_REGION_JAPAN;
-    } else if (region[2] == 0x59 || region[2] == 0x31) {
-        return FLASHROM_REGION_US;
-    } else if (region[2] == 0x5A || region[2] == 0x32) {
-        return FLASHROM_REGION_EUROPE;
-    } else {
-        dash_log(DBG_ERROR, "%s: Unknown region code %02x\n", __func__, region[2]);
-        return FLASHROM_REGION_UNKNOWN;
-    }
-}
-
-int is_hacked_bios() {
-    return (*(uint16_t *) 0xa0000000) == 0xe6ff;
-}
-
-int is_custom_bios() {
-    return (*(uint16_t *) 0xa0000004) == 0x4318;
 }
 
 void exec(const char *path) {
@@ -321,9 +281,4 @@ void launch_dcload_serial(void) {
 
 void launch_dcload_ip(void) {
     exec_gz("/rd/dcload-ip.bin.gz", 23736);
-}
-
-void loader_init() {
-    InitIDE();
-    InitSDCard();
 }

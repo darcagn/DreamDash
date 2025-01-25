@@ -10,22 +10,21 @@
 #include <kos.h>
 #include <stdlib.h>
 #include <zlib/zlib.h>
+
 #include "disc.h"
 #include "log.h"
 #include "utility.h"
 
+#define RUNGZ_FILE "/rd/rungd.bin.gz"
 #define RUNGZ_SIZE 65280
 
 ip_meta_t *ip_info;
-static void *bios_patch;
 static int cmd_response;
 static int status;
 static int disc_type;
 
 kthread_t *check_gdrom_thd;
 int kill_gdrom_thd = 0;
-
-extern void gdplay_run_game(void *bios_patch);
 
 static void set_info() {
     int lba = 45150;
@@ -66,30 +65,38 @@ static void set_info() {
         return;
      }
 
-    printf("\nDisc header info:\n");
-    printf("   Hardware ID:\t%.*s\n", 16, ip_info->hardware_ID);
-    printf("   Maker ID:\t%.*s\n", 16, ip_info->maker_ID);
-    printf("   Header CRC:\t%.*s\n", 5, ip_info->ks);
-    printf("   Disc Number:\t%c of %c\n", ip_info->disk_num[0], ip_info->disk_num[2]);
-    printf("   Region(s):\t%.*s\n", 3, ip_info->country_codes);
-    printf("   Control:\t%.*s\n", 4, ip_info->ctrl);
-    printf("   Devices:\t%.*s\n", 1, ip_info->dev);
-    printf("   VGA support:\t%s\n", ip_info->VGA[0] == '1'? "Yes":"No");
-    printf("   Windows CE:\t%s\n", ip_info->WinCE[0] == '1'? "Yes":"No");
-    printf("   Product ID:\t%.*s\n", 10, ip_info->product_ID);
-    printf("   Version:\t%.*s\n", 6, ip_info->product_version);
-    printf("   Date:\t%c%c%c%c-%c%c-%c%c\n", ip_info->release_date[0],
-                                             ip_info->release_date[1],
-                                             ip_info->release_date[2],
-                                             ip_info->release_date[3],
-                                             ip_info->release_date[4],
-                                             ip_info->release_date[5],
-                                             ip_info->release_date[6],
-                                             ip_info->release_date[7]);
-    printf("   Boot file:\t%.*s\n", 16, ip_info->boot_file);
-    printf("   Developer:\t%.*s\n", 16, ip_info->software_maker_info);
-    printf("   Title:\t%.*s\n", 128, ip_info->title);
-
+printf("\nDisc header info:\n"
+       "\tHardware ID:\t%.*s\n"
+       "\tMaker ID:\t%.*s\n"
+       "\tHeader CRC:\t%.*s\n"
+       "\tDisc Number:\t%c of %c\n"
+       "\tRegion(s):\t%.*s\n"
+       "\tControl:\t%.*s\n"
+       "\tDevices:\t%.*s\n"
+       "\tVGA support:\t%s\n"
+       "\tWindows CE:\t%s\n"
+       "\tProduct ID:\t%.*s\n"
+       "\tVersion:\t%.*s\n"
+       "\tDate:\t\t%c%c%c%c-%c%c-%c%c\n"
+       "\tBoot file:\t%.*s\n"
+       "\tDeveloper:\t%.*s\n"
+       "\tTitle:\t\t%.*s\n",
+       16, ip_info->hardware_ID,
+       16, ip_info->maker_ID,
+       5, ip_info->ks,
+       ip_info->disk_num[0], ip_info->disk_num[2],
+       3, ip_info->country_codes,
+       4, ip_info->ctrl,
+       1, ip_info->dev,
+       ip_info->VGA[0] == '1' ? "Yes" : "No",
+       ip_info->WinCE[0] == '1' ? "Yes" : "No",
+       10, ip_info->product_ID,
+       6, ip_info->product_version,
+       ip_info->release_date[0], ip_info->release_date[1], ip_info->release_date[2], ip_info->release_date[3],
+       ip_info->release_date[4], ip_info->release_date[5], ip_info->release_date[6], ip_info->release_date[7],
+       16, ip_info->boot_file,
+       16, ip_info->software_maker_info,
+       128, ip_info->title);
     fflush(stdout);
 }
 
@@ -124,26 +131,36 @@ static void *check_gdrom() {
 
 void disc_launch(void) {
     printf("Shutting down KOS and lauching disc... have fun!\n\n");
-    fflush(stdout);
-    kill_gdrom_thd = 1;
-    thd_join(check_gdrom_thd, NULL);
 
-    bios_patch = decompress_file_aligned("/rd/rungd.bin.gz", 32, RUNGZ_SIZE);
-
-    if(!bios_patch) {
-        dash_log(DBG_ERROR, "Error with BIOS patch!");
+    /* Open syscalls patch */
+    gzFile rungz = gzopen(RUNGZ_FILE, "rb");
+    if(!rungz) {
+        dash_log(DBG_ERROR, "Error opening %s!", RUNGZ_FILE);
         return;
     }
 
-    gdplay_run_game(bios_patch);
+    /* Decompress patched syscalls into place */
+    if(gzread(rungz, (void *)0x8C000100, RUNGZ_SIZE) != RUNGZ_SIZE) {
+        dash_log(DBG_ERROR, "Error decompressing %s!", RUNGZ_FILE);
+        return;
+    }
+
+    /* Clean up */
+    gzclose(rungz);
+    disc_shutdown();
+    fflush(stdout);
+
+    /* Disable and invalidate the cache */
+    *(volatile unsigned long *)0xFF00001C = 0x0808;
+
+    /* Bye bye! */
+    ((void (*)(volatile unsigned short))0x8C000120)(0xFFF);
+    __builtin_unreachable();
 }
 
 void disc_shutdown(void) {
     kill_gdrom_thd = 1;
     thd_join(check_gdrom_thd, NULL);
-
-    if(bios_patch)
-        free(bios_patch);
 }
 
 int disc_init(void) {

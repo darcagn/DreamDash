@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "bmfont.h"
 
 int bmf_parse(const char *fntPath, BMFont *bmFont) {

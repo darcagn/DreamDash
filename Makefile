@@ -13,16 +13,10 @@ endif
 HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
 
 ## Objects
-FATFS = src/ds/src/fs/fat
-DRIVERS = src/ds/src/drivers
-UTILS = src/ds/src/utils
-
 OBJS = src/main.o src/menu.o src/disc.o src/log.o src/utility.o \
-	src/bmfont.o src/descramble.o src/drawing.o src/input.o \
-	$(DRIVERS)/rtc.o $(DRIVERS)/sd.o $(DRIVERS)/spi.o \
-	$(FATFS)/../fs.o $(FATFS)/ff.o $(FATFS)/dc.o $(FATFS)/utils.o \
-	$(FATFS)/option/ccsbcs.o $(FATFS)/option/syscall.o \
-	$(UTILS)/../exec.o $(UTILS)/memcpy.o $(UTILS)/memset.o
+    src/bmfont.o src/drawing.o src/input.o \
+    src/fatfs/dc.o src/fatfs/dc_bdev.o src/fatfs/ff.o \
+    src/fatfs/option/ccsbcs.o src/fatfs/option/syscall.o
 
 ## Resources
 RELEASE_DIR = release
@@ -34,7 +28,6 @@ ROMDISK_FILES = ebdragon.fnt ebdragon.tex $(WALLPAPER_FILE)
 GZ_ROMDISK_FILES = dcload-ip.bin dcload-serial.bin rungd.bin
 
 ## Flags
-KOS_CFLAGS += -Isrc -Isrc/ds/include -Isrc/ds/include/fatfs
 KOS_CFLAGS += -DWALLPAPER_FILE="$(WALLPAPER_FILE)" -DWALLPAPER_RES=$(WALLPAPER_RES)
 KOS_CFLAGS += -DDASH_VERSION="$(VERSION)"
 ifneq ($(AUTOBOOT),0)
@@ -83,7 +76,7 @@ $(TARGET).bin: release-dir $(TARGET).elf
 
 $(TARGET).cdi: release-dir $(TARGET).elf
 ifneq ($(HAVE_MKDCDISC),)
-	mkdcdisc --author $(TARGET) -e $(TARGET).elf --no-mr -n $(TARGET)-$(VERSION) -r 20240818 -o release/$(TARGET).cdi
+	mkdcdisc --author $(TARGET) -e $(TARGET).elf --no-mr -n $(TARGET)-$(VERSION) -r 20250125 -o release/$(TARGET).cdi
 else
 	$(info mkdcdisc utility not found in PATH. Skipping CDI generation.)
 endif

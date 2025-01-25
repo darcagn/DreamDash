@@ -1,7 +1,8 @@
 #include <png/png.h>
 #include <string.h>
-#include "drawing.h"
+
 #include "bmfont.h"
+#include "drawing.h"
 
 static BMFont bmf_font;
 static pvr_ptr_t bmf_tex = NULL;

@@ -1,10 +1,12 @@
-#include <string.h>
+#include <kos/dbglog.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include "uthash/utlist.h"
-#include "utility.h"
+#include <string.h>
+
 #include "drawing.h"
+#include "utility.h"
+#include "utlist.h"
 
 List logList = {NULL, 0, "LOGS"};
 
@@ -40,4 +42,6 @@ void dash_log(int level, const char *fmt, ...) {
 
     // debug to screen too
     draw_printf(level, item->name);
+    // debug to console too
+    dbglog(level, item->name);
 }

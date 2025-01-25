@@ -1,10 +1,12 @@
 #include <kos.h>
-#include "menu.h"
-#include "input.h"
-#include "utility.h"
-#include "drawing.h"
+
 #include "disc.h"
+#include "drawing.h"
+#include "fatfs.h"
+#include "input.h"
 #include "log.h"
+#include "menu.h"
+#include "utility.h"
 
 int main(int argc, char **argv) {
     dash_log(DBG_INFO, "%s", kos_get_banner());
@@ -16,9 +18,11 @@ int main(int argc, char **argv) {
         launch_dcload_ip();
     }
 
+    fs_fat_mount_ide();
+    fs_fat_mount_sd();
     disc_init();
+
     draw_init();
-    loader_init();
     back_init();
 
 #ifdef AUTOBOOT
