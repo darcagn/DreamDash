@@ -2,7 +2,7 @@
 
 #include "disc.h"
 #include "drawing.h"
-#include "fatfs.h"
+#include "fatfs/fatfs.h"
 #include "input.h"
 #include "log.h"
 #include "menu.h"

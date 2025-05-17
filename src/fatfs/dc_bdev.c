@@ -83,7 +83,7 @@ typedef struct sd_devdata {
     uint64_t start_block;
 } sd_devdata_t;
 
-static int sd_blockdev_for_device(kos_blockdev_t *rv) {
+static int sd_blockdev_for_device_dd(kos_blockdev_t *rv) {
     sd_devdata_t *ddata;
 
     // if (!initted) {
@@ -176,7 +176,7 @@ int fs_fat_mount_sd() {
             else {
                 /* Need full disk block device for FAT */
                 dev->shutdown(dev);
-                if (sd_blockdev_for_device(dev)) {
+                if (sd_blockdev_for_device_dd(dev)) {
                     continue;
                 }
 

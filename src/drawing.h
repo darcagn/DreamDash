@@ -1,6 +1,8 @@
 #ifndef LOADER_DRAWING_H
 #define LOADER_DRAWING_H
 
+#include <stdint.h>
+
 #define DRAW_FONT_WIDTH 12.0f
 #define DRAW_FONT_HEIGHT 24.0f
 #define DRAW_FONT_LINE_SPACING 4.0f

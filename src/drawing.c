@@ -1,4 +1,5 @@
 #include <png/png.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "bmfont.h"
