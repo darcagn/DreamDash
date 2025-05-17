@@ -46,8 +46,6 @@
 #include "integer.h"
 #include "../log.h"
 
-// #define FATFS_DEBUG 1
-
 #define MAX_FAT_MOUNTS        _VOLUMES
 #define MAX_FAT_FILES         16
 #define FATFS_LINK_TBL_SIZE   32
@@ -63,7 +61,10 @@ typedef struct fatfs_mnt {
     BYTE dev_id;
 
     TCHAR dev_path[16];
+
+#ifdef FATFS_USE_DMA_BUF
     uint8_t *dmabuf;
+#endif
 
 } fatfs_mnt_t;
 
@@ -396,10 +397,16 @@ static ssize_t fat_read(void *hnd, void *buffer, size_t size) {
     FAT_GET_HND(hnd, -1);
 
     if (sf->fil.cltbl == NULL &&
-        (sf->mode & O_MODE_MASK) == O_RDONLY)
+        (sf->mode & O_MODE_MASK) == O_RDONLY &&
+        f_size(&sf->fil) > (DWORD)(sf->mnt->fs->csize * (1 << sf->mnt->dev->l_block_size)))
     {
-        /* Using fast seek feature */
+        /* Using fast seek feature for files larger than the cluster size */
         rc = fat_create_linkmap(sf);
+    }
+
+    /* We can use first fs_read just for preparing fast seek feature */
+    if(size == 0) {
+        return 0;
     }
 
     rc = f_read(&sf->fil, buffer, (UINT) size, &rs);
@@ -854,30 +861,28 @@ DRESULT disk_read (
     int rv;
 
     if (count > 1 && mnt->dev_dma) {
-        if ((uint32_t)buff & 0x1F) {
-            if (count <= mnt->fs->csize) {
-                dest = mnt->dmabuf;
-            }
-            else {
-                dest = (uint8_t *)memalign(32, count << dev->l_block_size);
-            }
+        if (((uintptr_t)buff & 31) == 0) {
+            dev = mnt->dev_dma;
         }
-        dev = mnt->dev_dma;
+#ifdef FATFS_USE_DMA_BUF
+        else if (count <= mnt->fs->csize) {
+            dest = mnt->dmabuf;
+            dev = mnt->dev_dma;
+        }
+#endif
     }
 
     DBG((DBG_DEBUG, "FATFS: %s[%d] %s %ld %d 0x%08lx 0x%08lx\n",
         __func__, pdrv, (dev == mnt->dev_dma ? "dma" : "pio"),
-        sector, (int)count, (uint32_t)buff, (uint32_t)dest));
+        sector, (int)count, (uintptr_t)buff, (uintptr_t)dest));
 
     rv = dev->read_blocks(dev, sector, count, dest);
 
+#ifdef FATFS_USE_DMA_BUF
     if (dest != buff) {
         memcpy(buff, dest, count << dev->l_block_size);
-
-        if (dest != mnt->dmabuf) {
-            free(dest);
-        }
     }
+#endif
 
     if (rv < 0) {
         DBG((DBG_ERROR, "FATFS: %s[%d] %s error: %d\n",
@@ -905,27 +910,23 @@ DRESULT disk_write (
     int rv;
 
     if (count > 1 && mnt->dev_dma) {
-        if ((uint32_t)buff & 0x1F) {
-            if (count <= mnt->fs->csize) {
-                src = mnt->dmabuf;
-            }
-            else {
-                src = (uint8_t *)memalign(32, count << dev->l_block_size);
-            }
+        if (((uintptr_t)buff & 31) == 0) {
+            dev = mnt->dev_dma;
+        }
+#ifdef FATFS_USE_DMA_BUF
+        else if (count <= mnt->fs->csize) {
+            src = mnt->dmabuf;
+            dev = mnt->dev_dma;
             memcpy(src, buff, count << dev->l_block_size);
         }
-        dev = mnt->dev_dma;
+#endif
     }
 
     DBG((DBG_DEBUG, "FATFS: %s[%d] %s %ld %d 0x%08lx 0x%08lx\n",
         __func__, pdrv, (dev == mnt->dev_dma ? "dma" : "pio"),
-        sector, (int)count, (uint32_t)buff, (uint32_t_t)src));
+        sector, (int)count, (uintptr_t)buff, (uintptr_t)src));
 
     rv = dev->write_blocks(dev, sector, count, src);
-
-    if (src != buff && src != mnt->dmabuf) {
-        free(src);
-    }
 
     if (rv < 0) {
         DBG((DBG_ERROR, "FATFS: %s[%d] %s error: %d\n",
@@ -1054,9 +1055,11 @@ static void fs_fat_free(fatfs_mnt_t *mnt) {
     if (mnt->dev_dma) {
         mnt->dev_dma->shutdown(mnt->dev_dma);
     }
+#ifdef FATFS_USE_DMA_BUF
     if (mnt->dmabuf) {
         free(mnt->dmabuf);
     }
+#endif
     memset(mnt, 0, sizeof(fatfs_mnt_t));
 }
 
@@ -1131,28 +1134,34 @@ int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dm
         goto error;
     }
 
+    uint32_t sect_size = (1 << mnt->dev->l_block_size);
+
+#ifdef FATFS_USE_DMA_BUF
     if (mnt->dev_dma) {
-        DBG((DBG_DEBUG, "FATFS: Allocating %d bytes for DMA buffer\n", mnt->fs->csize * _MAX_SS));
-        if (!(mnt->dmabuf = (uint8_t *)memalign(32, mnt->fs->csize * _MAX_SS))) {
+        DBG((DBG_DEBUG, "FATFS: Allocating %d bytes for DMA buffer\n", mnt->fs->csize * sect_size));
+        if (!(mnt->dmabuf = (uint8_t *)memalign(32, mnt->fs->csize * sect_size))) {
             dash_log(DBG_ERROR, "FATFS: Out of memory for DMA buffer\n");
         }
         else {
             DBG((DBG_DEBUG, "FATFS: Allocated %d bytes for DMA buffer at %p\n",
-                mnt->fs->csize * _MAX_SS, mnt->dmabuf));
+                mnt->fs->csize * sect_size, mnt->dmabuf));
         }
     }
+#endif
 
     FATFS *fs;
-    DWORD fre_clust, fre_sect, tot_sect;
+    DWORD fre_clust;
+    uint64_t fre_sect, tot_sect;
     rc = f_getfree(mnt->dev_path, &fre_clust, &fs);
 
     /* Get total sectors and free sectors */
-    tot_sect = (fs->n_fatent - 2) * fs->csize;
+    tot_sect = mnt->dev->count_blocks(mnt->dev);
     fre_sect = fre_clust * fs->csize;
 
     if (rc == FR_OK) {
-        dash_log(DBG_DEBUG, "FATFS: %lu KiB total drive space and %lu KiB available.\n",
-                tot_sect / 2, fre_sect / 2);
+        dash_log(DBG_DEBUG, "FATFS: %lu MB total, %lu MB free.\n",
+                (uint32_t)((tot_sect * sect_size) / 1024 / 1024), 
+                (uint32_t)((fre_sect * sect_size) / 1024 / 1024));
     }
 
     DBG((DBG_DEBUG, "FATFS: FAT start sector: %ld\n", mnt->fs->fatbase));
@@ -1236,6 +1245,11 @@ int fs_fat_shutdown(void) {
     if (!initted) {
         return 0;
     }
+
+    /* Clean up SD and IDE resources */
+    fs_fat_unmount_sd();
+    fs_fat_unmount_ide();
+
     for (i = 0; i < MAX_FAT_MOUNTS; ++i) {
 
         if (fat_mnt[i].dev != NULL) {

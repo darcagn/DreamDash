@@ -75,7 +75,8 @@ int fs_fat_shutdown(void);
  * \param partition Partition number (reset to 0 for start block).
  * \return 0 on success, or a negative value if an error occurred.
  */
-int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio, kos_blockdev_t *dev_dma, int partition);
+int fs_fat_mount(const char *mp, kos_blockdev_t *dev_pio,
+    kos_blockdev_t *dev_dma, int partition);
 
 /**
  * \brief Unmount the FAT filesystem.
@@ -95,10 +96,17 @@ int fs_fat_is_mounted(const char *mp);
 
 /**
  * \brief Initialize the FAT and SD card, then mount all partitions on it.
+ * This function will try to detect and mount both SCIF and SCI interfaces
+ * if they are available.
  *
  * \return 0 on success, or a negative value if an error occurred.
  */
 int fs_fat_mount_sd(void);
+
+/**
+ * \brief Unmount all SD card partitions and free resources.
+ */
+void fs_fat_unmount_sd(void);
 
 /**
  * \brief Initialize the FAT and IDE (G1-ATA), then mount all partitions on it.
@@ -106,5 +114,10 @@ int fs_fat_mount_sd(void);
  * \return 0 on success, or a negative value if an error occurred.
  */
 int fs_fat_mount_ide(void);
+
+/**
+ * \brief Unmount all IDE partitions and free resources.
+ */
+void fs_fat_unmount_ide(void);
 
 #endif /* _FATFS_H */

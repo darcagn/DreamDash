@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -64,102 +65,53 @@ static int check_partition(uint8_t *buf, int partition) {
     int pval;
     
     if (buf[0x01FE] != 0x55 || buf[0x1FF] != 0xAA) {
-		// dash_log(DBG_DEBUG, "Device doesn't appear to have a MBR\n");
+        // dash_log(DBG_DEBUG, "Device doesn't appear to have a MBR\n");
         return -1;
     }
     
     pval = 16 * partition + 0x01BE;
 
     if (buf[pval + 4] == 0) {
-		// dash_log(DBG_DEBUG, "Partition empty: 0x%02x\n", buf[pval + 4]);
+        // dash_log(DBG_DEBUG, "Partition empty: 0x%02x\n", buf[pval + 4]);
         return -1;
     }
     
     return 0;
 }
 
-typedef struct sd_devdata {
-    uint64_t block_count;
-    uint64_t start_block;
-} sd_devdata_t;
-
-static int sd_blockdev_for_device_dd(kos_blockdev_t *rv) {
-    sd_devdata_t *ddata;
-
-    // if (!initted) {
-    //     errno = ENXIO;
-    //     return -1;
-    // }
-
-    if (!rv) {
-        errno = EFAULT;
-        return -1;
-    }
-
-    /* Allocate the device data */
-    if (!(ddata = (sd_devdata_t *)malloc(sizeof(sd_devdata_t)))) {
-        errno = ENOMEM;
-        return -1;
-    }
-
-    ddata->start_block = 0;
-    ddata->block_count = (sd_get_size() / 512);
-    rv->dev_data = ddata;
-
-    return 0;
-}
-
-int fs_fat_mount_sd() {
-
+static bool mount_sd_card(uint8_t *mbr_buf) {
     uint8_t partition_type;
     int part = 0, fat_part = 0;
     char path[8];
-    uint8_t buf[512];
     kos_blockdev_t *dev;
+    const char *prefix = "/sd";
 
-    dash_log(DBG_INFO, "Checking for SD card...\n");
-
-    if (sd_init()) {
-        scif_init();
-        dash_log(DBG_INFO, "\nSD card not found.\n");
-        return -1;
-    }
-
-    dash_log(DBG_INFO, "SD card initialized, capacity %" PRIu32 " MB\n",
-        (uint32)(sd_get_size() / 1024 / 1024));
-
-    if (sd_read_blocks(0, 1, buf)) {
-        dash_log(DBG_ERROR, "Can't read MBR from SD card\n");
-        return -1;
-    }
-
-    if (!sd_dev) {
+    if (sd_dev == NULL) {
         sd_dev = malloc(sizeof(kos_blockdev_t) * MAX_PARTITIONS);
-    }
-    if (!sd_dev) {
-        dash_log(DBG_ERROR, "Can't allocate memory for SD card partitions\n");
-        return -1;
-    }
 
-    memset(&sd_dev[0], 0, sizeof(kos_blockdev_t) * MAX_PARTITIONS);
+        if (sd_dev == NULL) {
+            dash_log(DBG_ERROR, "FATFS: Can't allocate memory for SD card partitions\n");
+            return false;
+        }
+
+        memset(sd_dev, 0, sizeof(kos_blockdev_t) * MAX_PARTITIONS);
+    }
 
     for (part = 0; part < MAX_PARTITIONS; part++) {
-
         dev = &sd_dev[part];
 
-        if (check_partition(buf, part)) {
+        if (check_partition(mbr_buf, part)) {
             continue;
         }
         if (sd_blockdev_for_partition(part, dev, &partition_type)) {
             continue;
         }
 
-        if (!part) {
-            strcpy(path, "/sd");
-            path[3] = '\0';
+        if (part == 0) {
+            strcpy(path, prefix);
         }
         else {
-            sprintf(path, "sd%d", part);
+            sprintf(path, "%s%d", prefix, part);
         }
 
         /* Check to see if the MBR says that we have a FAT partition. */
@@ -167,33 +119,91 @@ int fs_fat_mount_sd() {
 
         if (fat_part) {
 
-            dash_log(DBG_INFO, "Detected FAT%d filesystem on partition %d\n", fat_part, part);
+            dash_log(DBG_INFO, "FATFS: Detected FAT%d on partition %d\n", fat_part, part);
 
             if (fs_fat_init()) {
-                dash_log(DBG_INFO, "Could not initialize fs_fat!\n");
+                dash_log(DBG_INFO, "FATFS: Could not initialize fatfs!\n");
                 dev->shutdown(dev);
             }
             else {
                 /* Need full disk block device for FAT */
                 dev->shutdown(dev);
-                if (sd_blockdev_for_device_dd(dev)) {
+
+                if (sd_blockdev_for_device(dev)) {
                     continue;
                 }
 
-                dash_log(DBG_INFO, "Mounting filesystem...\n");
+                dash_log(DBG_INFO, "FATFS: Mounting filesystem to %s...\n", path);
 
                 if (fs_fat_mount(path, dev, NULL, part)) {
-                    dash_log(DBG_INFO, "Could not mount device as fatfs.\n");
+                    dash_log(DBG_INFO, "FATFS: Could not mount device as fatfs.\n");
                     dev->shutdown(dev);
+                }
+                else {
+                    return true;
                 }
             }
         }
         else {
-            dash_log(DBG_INFO, "Unknown filesystem: 0x%02x\n", partition_type);
+            dash_log(DBG_INFO, "FATFS: Unknown filesystem: 0x%02x\n", partition_type);
             dev->shutdown(dev);
         }
     }
-    return 0;
+
+    return false;
+}
+
+int fs_fat_mount_sd() {
+    uint8_t mbr_buffer[512];
+    sd_init_params_t params;
+
+    dash_log(DBG_INFO, "FATFS: Checking for SD cards...\n");
+
+    /* Try SCIF interface first */
+    params.interface = SD_IF_SCIF;
+#ifdef FATFS_SD_CHECK_CRC
+    params.check_crc = true;
+#else
+    params.check_crc = false;
+#endif
+
+    memset(mbr_buffer, 0, sizeof(mbr_buffer));
+
+    if (sd_init_ex(&params) == 0) {
+        dash_log(DBG_INFO, "FATFS: SD card found on SCIF-SPI: %"PRIu32" MB\n",
+            (uint32)(sd_get_size() / 1024 / 1024));
+
+        if (sd_read_blocks(0, 1, mbr_buffer) == 0) {
+            if (mount_sd_card(mbr_buffer)) {
+                return 0;
+            }
+        }
+        else {
+            dash_log(DBG_ERROR, "FATFS: Can't read MBR from SCIF-SPI SD card\n");
+        }
+    }
+
+    /* Get back dbglog if they are used */
+    scif_init();
+
+    /* If no card found on SCIF, try SCI interface */
+    params.interface = SD_IF_SCI;
+
+    if (sd_init_ex(&params) == 0) {
+        dash_log(DBG_INFO, "FATFS: SD card found on SCI-SPI: %"PRIu32" MB\n",
+            (uint32)(sd_get_size() / 1024 / 1024));
+
+        if (sd_read_blocks(0, 1, mbr_buffer) == 0) {
+            if (mount_sd_card(mbr_buffer)) {
+                return 0;
+            }
+        }
+        else {
+            dash_log(DBG_ERROR, "FATFS: Can't read MBR from SCI-SPI SD card\n");
+        }
+    }
+    /* No cards found on any interface */
+    return -1;
 }
 
 int fs_fat_mount_ide() {
@@ -205,7 +215,7 @@ int fs_fat_mount_ide() {
     kos_blockdev_t *dev;
     kos_blockdev_t *dev_dma;
 
-    dash_log(DBG_INFO, "Checking for G1 ATA devices...\n");
+    dash_log(DBG_INFO, "FATFS: Checking for G1 ATA devices...\n");
 
     if (g1_ata_init()) {
         return -1;
@@ -214,13 +224,13 @@ int fs_fat_mount_ide() {
     /* Read the MBR from the disk */
     if (g1_ata_lba_mode()) {
         if (g1_ata_read_lba(0, 1, (uint16_t *)buf) < 0) {
-            dash_log(DBG_ERROR, "Can't read MBR from IDE by LBA\n");
+            dash_log(DBG_ERROR, "FATFS: Can't read MBR from IDE by LBA\n");
             return -1;
         }
     }
     else {
         if (g1_ata_read_chs(0, 0, 1, 1, (uint16_t *)buf) < 0) {
-            dash_log(DBG_ERROR, "Can't read MBR from IDE by CHS\n");
+            dash_log(DBG_ERROR, "FATFS: Can't read MBR from IDE by CHS\n");
             return -1;
         }
     }
@@ -230,7 +240,7 @@ int fs_fat_mount_ide() {
         g1_dev_dma = malloc(sizeof(kos_blockdev_t) * MAX_PARTITIONS);
     }
     if (!g1_dev || !g1_dev_dma) {
-        dash_log(DBG_ERROR, "Can't allocate memory for IDE partitions\n");
+        dash_log(DBG_ERROR, "FATFS: Can't allocate memory for IDE partitions\n");
         return -1;
     }
 
@@ -263,10 +273,10 @@ int fs_fat_mount_ide() {
 
         if (fat_part) {
 
-            dash_log(DBG_INFO, "Detected FAT%d filesystem on partition %d\n", fat_part, part);
+            dash_log(DBG_INFO, "FATFS: Detected FAT%d on partition %d\n", fat_part, part);
 
             if (fs_fat_init()) {
-                dash_log(DBG_INFO, "Could not initialize fs_fat!\n");
+                dash_log(DBG_INFO, "FATFS: Could not initialize fs_fat!\n");
                 dev->shutdown(dev);
             }
             else {
@@ -281,10 +291,10 @@ int fs_fat_mount_ide() {
                     dev_dma = NULL;
                 }
 
-                dash_log(DBG_INFO, "Mounting filesystem...\n");
+                dash_log(DBG_INFO, "FATFS: Mounting filesystem to %s...\n", path);
 
                 if (fs_fat_mount(path, dev, dev_dma, part)) {
-                    dash_log(DBG_INFO, "Could not mount device as fatfs.\n");
+                    dash_log(DBG_INFO, "FATFS: Could not mount device as fatfs.\n");
                     dev->shutdown(dev);
                     if (dev_dma) {
                         dev_dma->shutdown(dev_dma);
@@ -293,9 +303,61 @@ int fs_fat_mount_ide() {
             }
         }
         else {
-            dash_log(DBG_INFO, "Unknown filesystem: 0x%02x\n", partition_type);
+            dash_log(DBG_INFO, "FATFS: Unknown filesystem: 0x%02x\n", partition_type);
             dev->shutdown(dev);
         }
     }
     return 0;
+}
+
+/* Unmount and cleanup SD devices */
+void fs_fat_unmount_sd(void) {
+    if (sd_dev != NULL) {
+        for (int i = 0; i < MAX_PARTITIONS; i++) {
+            if (sd_dev[i].dev_data != NULL) {
+                char path[16];
+                if (i == 0) {
+                    strcpy(path, "/sd");
+                }
+                else {
+                    sprintf(path, "/sd%d", i);
+                }
+                fs_fat_unmount(path);
+                sd_dev[i].shutdown(&sd_dev[i]);
+            }
+        }
+        free(sd_dev);
+        sd_dev = NULL;
+    }
+}
+
+/* Unmount and cleanup IDE devices */
+void fs_fat_unmount_ide(void) {
+    if (g1_dev != NULL) {
+        for (int i = 0; i < MAX_PARTITIONS; i++) {
+            if (g1_dev[i].dev_data != NULL) {
+                char path[16];
+                if (i == 0) {
+                    strcpy(path, "/ide");
+                }
+                else {
+                    sprintf(path, "/ide%d", i);
+                }
+                fs_fat_unmount(path);
+                g1_dev[i].shutdown(&g1_dev[i]);
+            }
+        }
+        free(g1_dev);
+        g1_dev = NULL;
+    }
+
+    if (g1_dev_dma != NULL) {
+        for (int i = 0; i < MAX_PARTITIONS; i++) {
+            if (g1_dev_dma[i].dev_data != NULL) {
+                g1_dev_dma[i].shutdown(&g1_dev_dma[i]);
+            }
+        }
+        free(g1_dev_dma);
+        g1_dev_dma = NULL;
+    }
 }
