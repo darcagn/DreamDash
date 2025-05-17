@@ -25,7 +25,7 @@ DreamDash is a replacement BIOS for Dreamcast power users and developers. It req
 ## How to Use
 - [Set up KallistiOS on your computer](https://dreamcast.wiki/Getting_Started_with_Dreamcast_development).
 - Compile KOS and the `zlib`/`libpng` kos-ports with `-Os` and `-flto=auto` in your `KOS_CFLAGS` to keep code size small.
-  - KOS master with commit ID `03b51ef` is known to work properly.
+  - KOS master with commit ID `9c5ee7e` is known to compile with this code.
 - Open a terminal and source your KOS environment, clone this repo, and change into this repo's directory.
 - Run `make` to build `dreamdash.elf`. Run `kos-strip dreamdash.elf` and check the filesize. If larger than 500KB, it may not work and can produce a non-working BIOS image, so check your `KOS_CFLAGS` and try again.
 - Run `make all` to build everything. Check the `release` directory for generated files:
