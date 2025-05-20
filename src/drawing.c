@@ -1,9 +1,11 @@
-#include <png/png.h>
 #include <stdarg.h>
 #include <string.h>
 
+#include <png/png.h>
+
 #include "bmfont.h"
 #include "drawing.h"
+#include "log.h"
 
 static BMFont bmf_font;
 static pvr_ptr_t bmf_tex = NULL;
