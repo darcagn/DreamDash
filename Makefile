@@ -14,9 +14,23 @@ HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
 
 ## Objects
 OBJS = src/main.o src/menu.o src/disc.o src/log.o src/utility.o \
-    src/bmfont.o src/drawing.o src/input.o \
-    src/fatfs/dc.o src/fatfs/dc_bdev.o src/fatfs/ff.o \
-    src/fatfs/option/ccsbcs.o src/fatfs/option/syscall.o
+    src/bmfont.o src/drawing.o src/input.o
+
+ifeq ("$(FAT_LIBRARY)","fatfs")
+    OBJS += src/fatfs/dc.o src/fatfs/dc_bdev.o src/fatfs/ff.o \
+            src/fatfs/option/ccsbcs.o src/fatfs/option/syscall.o
+endif
+
+## Libraries
+LIBS = -lpng -lz -lm
+
+ifeq ("$(FAT_LIBRARY)","kosfat")
+    LIBS += -lkosfat
+endif
+
+#ifeq ("$(FAT_LIBRARY)","fatfs")
+#    LIBS += -lfatfs
+#endif
 
 ## Resources
 RELEASE_DIR = release
@@ -34,6 +48,14 @@ ifneq ($(AUTOBOOT),0)
     KOS_CFLAGS += -DAUTOBOOT
 endif
 
+ifeq ("$(FAT_LIBRARY)","kosfat")
+    KOS_CFLAGS += -DFAT_LIBRARY_KOSFAT
+endif
+
+ifeq ("$(FAT_LIBRARY)","fatfs")
+    KOS_CFLAGS += -DFAT_LIBRARY_FATFS
+endif
+
 ## Rules
 default: rm-elf $(TARGET).elf
 
@@ -48,7 +70,7 @@ $(GZ_ROMDISK_FILES):
 	gzip -c $(RESOURCE_DIR)/$@ > $(KOS_ROMDISK_DIR)/$@.gz
 
 $(TARGET).elf: $(ROMDISK_FILES) $(GZ_ROMDISK_FILES) $(OBJS) romdisk.o
-	kos-cc -o $(TARGET).elf $(OBJS) romdisk.o -lpng -lz -lm -lkosext2fs
+	kos-cc -o $(TARGET).elf $(OBJS) romdisk.o $(LIBS)
 
 all: $(TARGET).elf $(TARGET).bin 1ST_READ.BIN $(TARGET).cdi bios-all
 
