@@ -50,6 +50,8 @@
 #define MAX_FAT_FILES         16
 #define FATFS_LINK_TBL_SIZE   32
 
+typedef uint32_t ptr_t;
+
 typedef struct fatfs_mnt {
 
     FATFS *fs;
