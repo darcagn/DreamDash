@@ -35,6 +35,21 @@ endif
 #    LIBS += -lfatfs
 #endif
 
+## Functions
+
+define check_size
+	@size=$$(wc -c < $(1)); \
+	if [ $$size -gt $(2) ]; then \
+		echo "Error: $(1) ($$size bytes) exceeds $(3) limit ($(2) bytes)!"; \
+		echo "       In order to build a BIOS image, DreamDash must fit within that size."; \
+		echo " Tips: - Adjust settings in Makefile.cfg to reduce code and resources."; \
+		echo "       - Make sure your KallistiOS and all used kos-ports are built using the "; \
+		echo "         -Os and -flto=auto flags in your $KOS_CFLAGS build flags."; \
+		echo "       - Use GCC 13.2.0 (KOS stable compiler profile) as it generates smaller code."; \
+		exit 1; \
+	fi
+endef
+
 ## Resources
 RELEASE_DIR = release
 RESOURCE_DIR = res
@@ -116,41 +131,49 @@ endif
 
 bios: $(TARGET).bios
 $(TARGET).bios: release-dir $(TARGET).bin
+	$(call check_size,release/$(TARGET).bin,517120,505KB)
 	cp -f res/boot_loader_retail.bios release/$(TARGET).bios
 	dd if=release/$(TARGET).bin of=release/$(TARGET).bios bs=1024 seek=64 conv=notrunc
 
 bios-nogdrom: $(TARGET)-nogdrom.bios
 $(TARGET)-nogdrom.bios: release-dir $(TARGET).bin
+	$(call check_size,release/$(TARGET).bin,517120,505KB)
 	cp -f res/boot_loader_retail_nogdrom.bios release/$(TARGET)-nogdrom.bios
 	dd if=release/$(TARGET).bin of=release/$(TARGET)-nogdrom.bios bs=1024 seek=64 conv=notrunc
 
 bios-devkit: $(TARGET)-devkit.bios
 $(TARGET)-devkit.bios: release-dir $(TARGET).bin
+	$(call check_size,release/$(TARGET).bin,517120,505KB)
 	cp -f res/boot_loader_devkit.bios release/$(TARGET)-devkit.bios
 	dd if=release/$(TARGET).bin of=release/$(TARGET)-devkit.bios bs=1024 seek=64 conv=notrunc
 
 bios-devkit-nogdrom: $(TARGET)-devkit-nogdrom.bios
 $(TARGET)-devkit-nogdrom.bios: release-dir $(TARGET).bin
+	$(call check_size,release/$(TARGET).bin,517120,505KB)
 	cp -f res/boot_loader_devkit_nogdrom.bios release/$(TARGET)-devkit-nogdrom.bios
 	dd if=release/$(TARGET).bin of=release/$(TARGET)-devkit-nogdrom.bios bs=1024 seek=64 conv=notrunc
 
 bios-32mb: $(TARGET)-32mb.bios
 $(TARGET)-32mb.bios: release-dir $(TARGET).bin
+	$(call check_size,release/$(TARGET).bin,517120,505KB)
 	cp -f res/boot_loader_retail_32mb.bios release/$(TARGET)-32mb.bios
 	dd if=release/$(TARGET).bin of=release/$(TARGET)-32mb.bios bs=1024 seek=64 conv=notrunc
 
 bios-nogdrom-32mb: $(TARGET)-nogdrom-32mb.bios
 $(TARGET)-nogdrom-32mb.bios: release-dir $(TARGET).bin
+	$(call check_size,release/$(TARGET).bin,517120,505KB)
 	cp -f res/boot_loader_retail_nogdrom_32mb.bios release/$(TARGET)-nogdrom-32mb.bios
 	dd if=release/$(TARGET).bin of=release/$(TARGET)-nogdrom-32mb.bios bs=1024 seek=64 conv=notrunc
 
 bios-devkit-32mb: $(TARGET)-devkit-32mb.bios
 $(TARGET)-devkit-32mb.bios: release-dir $(TARGET).bin
+	$(call check_size,release/$(TARGET).bin,517120,505KB)
 	cp -f res/boot_loader_devkit_32mb.bios release/$(TARGET)-devkit-32mb.bios
 	dd if=release/$(TARGET).bin of=release/$(TARGET)-devkit-32mb.bios bs=1024 seek=64 conv=notrunc
 
 bios-devkit-nogdrom-32mb: $(TARGET)-devkit-nogdrom-32mb.bios
 $(TARGET)-devkit-nogdrom-32mb.bios: release-dir $(TARGET).bin
+	$(call check_size,release/$(TARGET).bin,517120,505KB)
 	cp -f res/boot_loader_devkit_nogdrom_32mb.bios release/$(TARGET)-devkit-nogdrom-32mb.bios
 	dd if=release/$(TARGET).bin of=release/$(TARGET)-devkit-nogdrom-32mb.bios bs=1024 seek=64 conv=notrunc
 
