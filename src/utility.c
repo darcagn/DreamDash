@@ -7,7 +7,8 @@
 #include "utility.h"
 #include "utlist.h"
 
-KOS_INIT_FLAGS(INIT_DEFAULT);
+KOS_INIT_FLAGS(INIT_IRQ | INIT_THD_PREEMPT | INIT_FS_ALL | \
+               INIT_LIBRARY | INIT_CDROM | INIT_CONTROLLER | INIT_VMU);
 
 void dash_log(int level, const char *fmt, ...);
 
