@@ -13,8 +13,11 @@ endif
 HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
 
 ## Objects
-OBJS = src/main.o src/menu.o src/disc.o src/log.o src/utility.o \
-    src/bmfont.o src/drawing.o src/input.o
+OBJS = src/main.o src/menu.o src/log.o src/utility.o src/bmfont.o src/drawing.o src/input.o
+
+ifneq ($(DISC_SUPPORT),0)
+    OBJS += src/disc.o
+endif
 
 ifeq ("$(FAT_LIBRARY)","fatfs")
     OBJS += src/fatfs/dc.o src/fatfs/dc_bdev.o src/fatfs/ff.o \
@@ -39,13 +42,21 @@ KOS_ROMDISK_DIR = romdisk
 
 WALLPAPER_FILE = $(WALLPAPER_SHADE)-wall-$(WALLPAPER_RES).png
 ROMDISK_FILES = ebdragon.fnt ebdragon.tex $(WALLPAPER_FILE)
-GZ_ROMDISK_FILES = dcload-ip.bin dcload-serial.bin rungd.bin
+GZ_ROMDISK_FILES = dcload-ip.bin dcload-serial.bin
+
+ifneq ($(DISC_SUPPORT),0)
+    GZ_ROMDISK_FILES += rungd.bin
+endif
 
 ## Flags
 KOS_CFLAGS += -DWALLPAPER_FILE="$(WALLPAPER_FILE)" -DWALLPAPER_RES=$(WALLPAPER_RES)
 KOS_CFLAGS += -DDASH_VERSION="$(VERSION)"
 ifneq ($(AUTOBOOT),0)
     KOS_CFLAGS += -DAUTOBOOT
+endif
+
+ifneq ($(DISC_SUPPORT),0)
+    KOS_CFLAGS += -DDISC_SUPPORT
 endif
 
 ifeq ("$(FAT_LIBRARY)","kosfat")

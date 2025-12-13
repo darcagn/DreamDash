@@ -60,7 +60,9 @@ static void menu_init() {
     menu_main_add_item("File Browser", MENU_FILER);
     menu_main_add_item("dcload-ip", MENU_DCLOAD_IP);
     menu_main_add_item("dcload-serial", MENU_DCLOAD_SERIAL);
+#ifdef DISC_SUPPORT
     menu_main_add_item("Play Disc", MENU_DISC);
+#endif
     menu_main_add_item("View Logs", MENU_LOGS);
 }
 
@@ -211,10 +213,12 @@ static int menu_input() {
                     list_index = 0;
                     highlight_index = 0;
                     menu_id = MENU_LOGS;
+#ifdef DISC_SUPPORT
                 } else if (item->type == MENU_DISC) {
                     if (ip_info != NULL) {
                         disc_launch();
                     }
+#endif
                 } else if (item->type == MENU_RETRODREAM) {
                     launch_retrodream();
                 } else if (item->type == MENU_DREAMSHELL) {

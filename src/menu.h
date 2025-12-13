@@ -8,7 +8,9 @@ enum Menu {
     MENU_FILER,
     MENU_DCLOAD_SERIAL,
     MENU_DCLOAD_IP,
+#ifdef DISC_SUPPORT
     MENU_DISC,
+#endif
     MENU_LOGS
 };
 

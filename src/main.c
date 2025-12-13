@@ -72,7 +72,9 @@ int main(int argc, char **argv) {
     fs_fat_mount_sd();
 #endif
 
+#ifdef DISC_SUPPORT
     disc_init();
+#endif
 
     draw_init();
     back_init();
