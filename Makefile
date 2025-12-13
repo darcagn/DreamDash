@@ -1,4 +1,9 @@
-## Configuration
+####################################################################################################
+## NOTE: You shouldn't have to edit anything in this file. Check out Makefile.cfg for user config ##
+####################################################################################################
+
+###### Configuration ###############################################################################
+
 config_file=Makefile.cfg
 ifneq ("$(wildcard $(config_file))","")
     include $(config_file)
@@ -10,9 +15,12 @@ else
     endif
 endif
 
+###### Pre-Checks ##################################################################################
+
 HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
 
-## Objects
+###### Objects #####################################################################################
+
 OBJS = src/main.o src/menu.o src/log.o src/utility.o src/bmfont.o src/drawing.o src/input.o
 
 ifneq ($(DISC_SUPPORT),0)
@@ -24,7 +32,8 @@ ifeq ("$(FAT_LIBRARY)","fatfs")
             src/fatfs/option/ccsbcs.o src/fatfs/option/syscall.o
 endif
 
-## Libraries
+###### Libraries ###################################################################################
+
 LIBS = -lpng -lz -lm
 
 ifeq ("$(FAT_LIBRARY)","kosfat")
@@ -35,22 +44,8 @@ endif
 #    LIBS += -lfatfs
 #endif
 
-## Functions
+###### Resources ###################################################################################
 
-define check_size
-	@size=$$(wc -c < $(1)); \
-	if [ $$size -gt $(2) ]; then \
-		echo "Error: $(1) ($$size bytes) exceeds $(3) limit ($(2) bytes)!"; \
-		echo "       In order to build a BIOS image, DreamDash must fit within that size."; \
-		echo " Tips: - Adjust settings in Makefile.cfg to reduce code and resources."; \
-		echo "       - Make sure your KallistiOS and all used kos-ports are built using the "; \
-		echo "         -Os and -flto=auto flags in your $KOS_CFLAGS build flags."; \
-		echo "       - Use GCC 13.2.0 (KOS stable compiler profile) as it generates smaller code."; \
-		exit 1; \
-	fi
-endef
-
-## Resources
 RELEASE_DIR = release
 RESOURCE_DIR = res
 KOS_ROMDISK_DIR = romdisk
@@ -63,9 +58,11 @@ ifneq ($(DISC_SUPPORT),0)
     GZ_ROMDISK_FILES += rungd.bin
 endif
 
-## Flags
+###### Flags #######################################################################################
+
 KOS_CFLAGS += -DWALLPAPER_FILE="$(WALLPAPER_FILE)" -DWALLPAPER_RES=$(WALLPAPER_RES)
 KOS_CFLAGS += -DDASH_VERSION="$(VERSION)"
+
 ifneq ($(AUTOBOOT),0)
     KOS_CFLAGS += -DAUTOBOOT
 endif
@@ -82,7 +79,23 @@ ifeq ("$(FAT_LIBRARY)","fatfs")
     KOS_CFLAGS += -DFAT_LIBRARY_FATFS
 endif
 
-## Rules
+###### Functions ###################################################################################
+
+define check_size
+	@size=$$(wc -c < $(1)); \
+	if [ $$size -gt $(2) ]; then \
+		echo "Error: $(1) ($$size bytes) exceeds $(3) limit ($(2) bytes)!"; \
+		echo "       In order to build a BIOS image, DreamDash must fit within that size."; \
+		echo " Tips: - Adjust settings in Makefile.cfg to reduce code and resources."; \
+		echo "       - Make sure your KallistiOS and all used kos-ports are built using the "; \
+		echo "         -Os and -flto=auto flags in your $KOS_CFLAGS build flags."; \
+		echo "       - Use GCC 13.2.0 (KOS stable compiler profile) as it generates smaller code."; \
+		exit 1; \
+	fi
+endef
+
+###### Rules #######################################################################################
+
 default: rm-elf $(TARGET).elf
 
 include $(KOS_BASE)/Makefile.rules
@@ -178,3 +191,4 @@ $(TARGET)-devkit-nogdrom-32mb.bios: release-dir $(TARGET).bin
 	dd if=release/$(TARGET).bin of=release/$(TARGET)-devkit-nogdrom-32mb.bios bs=1024 seek=64 conv=notrunc
 
 bios-all: bios bios-nogdrom bios-devkit bios-devkit-nogdrom bios-32mb bios-nogdrom-32mb bios-devkit-32mb bios-devkit-nogdrom-32mb
+
