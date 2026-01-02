@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <kos/dbglog.h>
+
 #define ROMFONT_WIDTH 	12
 #define ROMFONT_HEIGHT 	24
 #define DRAW_FONT_WIDTH 12.0f

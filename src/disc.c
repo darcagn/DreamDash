@@ -12,7 +12,6 @@
 #include <zlib/zlib.h>
 
 #include "disc.h"
-#include "log.h"
 #include "utility.h"
 
 #define RUNGZ_FILE "/rd/rungd.bin.gz"
@@ -137,13 +136,13 @@ void disc_launch(void) {
     /* Open syscalls patch */
     gzFile rungz = gzopen(RUNGZ_FILE, "rb");
     if(!rungz) {
-        dash_log(DBG_ERROR, "Error opening %s!", RUNGZ_FILE);
+        dbglog(DBG_ERROR, "Error opening %s!", RUNGZ_FILE);
         return;
     }
 
     /* Decompress patched syscalls into place */
     if(gzread(rungz, (void *)0x8C000100, RUNGZ_SIZE) != RUNGZ_SIZE) {
-        dash_log(DBG_ERROR, "Error decompressing %s!", RUNGZ_FILE);
+        dbglog(DBG_ERROR, "Error decompressing %s!", RUNGZ_FILE);
         return;
     }
 
@@ -167,15 +166,15 @@ void disc_shutdown(void) {
 
 int disc_init(void) {
     // TODO: Check if GD-ROM drive is available is available
-    // If not, dash_log(DBG_INFO, "No GD-ROM drive found."); return -1;
+    // If not, dbglog(DBG_INFO, "No GD-ROM drive found."); return -1;
 
     if(!file_exists("/rd/rungd.bin.gz")) {
-        dash_log(DBG_ERROR, "Error accessing rungd.bin.gz!");
+        dbglog(DBG_ERROR, "Error accessing rungd.bin.gz!");
     }
 
     check_gdrom_thd = thd_create(1, check_gdrom, NULL);
 
-    dash_log(DBG_INFO, "GD-ROM initialized.");
+    dbglog(DBG_INFO, "GD-ROM initialized.");
 
     return 0;
 }

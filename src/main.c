@@ -3,7 +3,6 @@
 #include "disc.h"
 #include "drawing.h"
 #include "input.h"
-#include "log.h"
 #include "menu.h"
 #include "utility.h"
 
@@ -32,7 +31,7 @@ void sdcard_init(void) {
     if (fs_fat_mount("/sd", &sd_dev, FS_FAT_MOUNT_READWRITE))
         return;
 
-    printf("mounted sd card at /sd\n");
+    dbglog(DBG_INFO, "mounted sd card at /sd\n");
 }
 
 void ide_init(void) {
@@ -47,13 +46,11 @@ void ide_init(void) {
     if (fs_fat_mount("/ide", &ide_dev, FS_FAT_MOUNT_READWRITE))
         return;
 
-    printf("mounted ide partition at /ide\n");
+    dbglog(DBG_INFO, "mounted ide partition at /ide\n");
 }
 #endif
 
 int main(int argc, char **argv) {
-    dash_log(DBG_INFO, "%s", kos_get_banner());
-
     uint32_t keys = get_input();
     if (keys & CONT_A && keys & CONT_B) {
         launch_dcload_serial();

@@ -7,7 +7,6 @@
 
 #include "bmfont.h"
 #include "drawing.h"
-#include "log.h"
 
 static pvr_ptr_t font_tex = NULL;
 

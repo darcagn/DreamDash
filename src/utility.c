@@ -10,14 +10,6 @@
 KOS_INIT_FLAGS(INIT_IRQ | INIT_THD_PREEMPT | INIT_FS_ALL | \
                INIT_LIBRARY | INIT_CDROM | INIT_CONTROLLER | INIT_VMU);
 
-void dash_log(int level, const char *fmt, ...);
-
-#ifdef dbglog
-#undef dbglog
-#endif
-
-#define dbglog(lv, fmt, ...) dash_log(lv, fmt, ##__VA_ARGS__)
-
 int list_cmp(ListItem *a, ListItem *b) {
 
     if (a->type == TYPE_DIR && b->type != TYPE_DIR) {
@@ -257,18 +249,18 @@ void *decompress_file(const char *file, int output_size) {
     gzFile gzfile = gzopen(file, "rb");
 
     if(!gzfile) {
-        dash_log(DBG_ERROR, "Error opening %s!", file);
+        dbglog(DBG_ERROR, "Error opening %s!", file);
         return NULL;
     }
 
     void *buffer = malloc(output_size);
     if(!buffer) {
-        dash_log(DBG_ERROR, "Error in malloc!");
+        dbglog(DBG_ERROR, "Error in malloc!");
         return NULL;
     }
 
     if(gzread(gzfile, buffer, output_size) != output_size) {
-        dash_log(DBG_ERROR, "Error decompressing %s!", file);
+        dbglog(DBG_ERROR, "Error decompressing %s!", file);
         return NULL;
     }
 
@@ -284,7 +276,7 @@ void exec(const char *path) {
     int size = 0;
     char *bin = read_file(path, &size);
     if (bin == NULL || size < 1) {
-        dash_log(DBG_ERROR, "EXEC: COULD NOT READ %s\n", path);
+        dbglog(DBG_ERROR, "EXEC: COULD NOT READ %s\n", path);
         return;
     }
 
@@ -296,7 +288,7 @@ void exec_gz(const char *path, size_t size) {
 
     char *bin = decompress_file(path, size);
     if (bin == NULL || size < 1) {
-        dash_log(DBG_ERROR, "EXEC: COULD NOT READ %s\n", path);
+        dbglog(DBG_ERROR, "EXEC: COULD NOT READ %s\n", path);
         return;
     }
 

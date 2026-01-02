@@ -7,7 +7,6 @@
 #include "disc.h"
 #include "drawing.h"
 #include "input.h"
-#include "log.h"
 #include "menu.h"
 #include "utility.h"
 
