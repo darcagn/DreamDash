@@ -50,7 +50,7 @@ static void set_info() {
     cmd_response = cdrom_read_sectors(pbuff, lba, 1);
 
     if(cmd_response != ERR_OK) {
-        if(cmd_response == (ERR_DISC_CHG || ERR_NO_DISC)) {
+        if(cmd_response == ERR_DISC_CHG || cmd_response == ERR_NO_DISC) {
             return;
         } else {
             printf("Error %d reading disc at LBA %d\n", cmd_response, lba);
