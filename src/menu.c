@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/queue.h>
 
 #include "disc.h"
 #include "drawing.h"
@@ -9,7 +10,6 @@
 #include "log.h"
 #include "menu.h"
 #include "utility.h"
-#include "utlist.h"
 
 static int menu_id = MENU_MAIN;
 static int line_height = 0;
@@ -19,7 +19,7 @@ static int highlight_index = 0;
 static Rect menuRect;
 static Rect pathRect;
 static Rect filerRect;
-static List menuList = {NULL, 0, "BOOT MENU"};
+static List menuList;
 static List fileList;
 extern List logList;
 
@@ -28,12 +28,11 @@ static void menu_main_add_item(const char *name, int menu_id) {
     memset(item, 0, sizeof(ListItem));
     item->type = menu_id;
     strcpy(item->name, name);
-    DL_APPEND(menuList.head, item);
+    TAILQ_INSERT_TAIL(&menuList.head, item, entries);
     menuList.size++;
 }
 
 static void menu_init() {
-
     Vec2 screenSize = draw_get_screen_size();
 
     menuRect = (Rect) {32, 32, screenSize.x - 64, screenSize.y - 64};
@@ -49,6 +48,12 @@ static void menu_init() {
     if (line_max * line_height < (int) filerRect.height) {
         line_height = (int) filerRect.height / line_max;
     }
+
+    menuList = (List) {
+        .head = TAILQ_HEAD_INITIALIZER(menuList.head),
+        .size = 0,
+        .path = "BOOT MENU"
+    };
 
     // build main menu
     if (file_exists("/sd/RD/retrodream.bin") || file_exists("/ide/RD/retrodream.bin")) {

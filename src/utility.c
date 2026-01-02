@@ -1,11 +1,11 @@
 #include <kos.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/queue.h>
 #include <zlib/zlib.h>
 
 #include "drawing.h"
 #include "utility.h"
-#include "utlist.h"
 
 KOS_INIT_FLAGS(INIT_IRQ | INIT_THD_PREEMPT | INIT_FS_ALL | \
                INIT_LIBRARY | INIT_CDROM | INIT_CONTROLLER | INIT_VMU);
@@ -25,27 +25,65 @@ int list_cmp(ListItem *a, ListItem *b) {
     return strcasecmp(a->name, b->name);
 }
 
+/* Sort the list using insertion sort */
+static void list_sort(List *list) {
+    ListItem *item, *sorted_item, *temp;
+    struct ListHead sorted_head;
+
+    if (list->size <= 1) {
+        return;
+    }
+
+    TAILQ_INIT(&sorted_head);
+
+    /* Move all items to sorted list in order */
+    while (!TAILQ_EMPTY(&list->head)) {
+        item = TAILQ_FIRST(&list->head);
+        TAILQ_REMOVE(&list->head, item, entries);
+
+        /* Find insertion point */
+        if (TAILQ_EMPTY(&sorted_head)) {
+            TAILQ_INSERT_HEAD(&sorted_head, item, entries);
+        } else {
+            sorted_item = NULL;
+            TAILQ_FOREACH(temp, &sorted_head, entries) {
+                if (list_cmp(item, temp) < 0) {
+                    sorted_item = temp;
+                    break;
+                }
+            }
+
+            if (sorted_item != NULL) {
+                TAILQ_INSERT_BEFORE(sorted_item, item, entries);
+            } else {
+                TAILQ_INSERT_TAIL(&sorted_head, item, entries);
+            }
+        }
+    }
+
+    /* Move sorted items back to original list */
+    list->head = sorted_head;
+}
+
 void free_dir(List *list) {
 
     ListItem *elt, *tmp;
-    DL_FOREACH_SAFE(list->head, elt, tmp) {
-        DL_DELETE(list->head, elt);
+    TAILQ_FOREACH_SAFE(elt, &list->head, entries, tmp) {
+        TAILQ_REMOVE(&list->head, elt, entries);
         free(elt);
     }
 }
 
 ListItem *get_item(List *list, int index) {
 
-    ListItem *file = list->head;
-    if (index == 0) {
-        return file;
-    }
+    ListItem *file;
+    int i = 0;
 
-    for (int i = 1; i < list->size; i++) {
-        file = (ListItem *) file->next;
-        if (index == i) {
+    TAILQ_FOREACH(file, &list->head, entries) {
+        if (i == index) {
             return file;
         }
+        i++;
     }
 
     return NULL;
@@ -103,6 +141,7 @@ void get_dir(List *list, const char *path) {
     ListItem *entry;
 
     memset(list, 0, sizeof(List));
+    TAILQ_INIT(&list->head);
     strncpy(list->path, path, MAX_PATH - 1);
 
     if ((fd = fs_open(path, O_RDONLY | O_DIR)) != FILEHND_INVALID) {
@@ -137,11 +176,11 @@ void get_dir(List *list, const char *path) {
                 }
             }
 
-            DL_APPEND(list->head, entry);
+            TAILQ_INSERT_TAIL(&list->head, entry, entries);
             list->size++;
         }
 
-        DL_SORT(list->head, list_cmp);
+        list_sort(list);
         fs_close(fd);
     }
 }

@@ -44,4 +44,3 @@ A chat room is available on the [dreamcast.wiki Discord server](https://discord.
 ## Acknowledgements
 - **KallistiOS** and **DreamShell** - kernel and drivers for the underlying operating system
 - **Cpajuste** - Dreamboot, from which this project was originally forked
-- **Troy D. Hanson & Arthur O'Dwyer** - ut* C structures libraries

@@ -3,17 +3,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/queue.h>
 
 #include "drawing.h"
 #include "utility.h"
-#include "utlist.h"
 
-List logList = {NULL, 0, "LOGS"};
+List logList;
+static int log_initialized = 0;
+
+void log_init(void) {
+    if (!log_initialized) {
+        logList = (List) {
+            .head = TAILQ_HEAD_INITIALIZER(logList.head),
+            .size = 0,
+            .path = "LOGS"
+        };
+
+        log_initialized = 1;
+    }
+}
 
 void dash_log(int level, const char *fmt, ...) {
 
     ListItem *item;
     va_list args;
+
+    log_init();
 
     item = (ListItem *) malloc(sizeof *item);
     memset(item, 0, sizeof(ListItem));
@@ -37,7 +52,7 @@ void dash_log(int level, const char *fmt, ...) {
     vsnprintf(item->name, MAX_PATH, fmt, args);
     va_end(args);
 
-    DL_APPEND(logList.head, item);
+    TAILQ_INSERT_TAIL(&logList.head, item, entries);
     logList.size++;
 
     // debug to screen too

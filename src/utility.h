@@ -1,6 +1,8 @@
 #ifndef LOADER_UTILITY_H
 #define LOADER_UTILITY_H
 
+#include <sys/queue.h>
+
 #define MAX_PATH 512
 
 enum FileType {
@@ -10,14 +12,16 @@ enum FileType {
 };
 
 typedef struct ListItem {
-    struct ListItem *next, *prev;
+    TAILQ_ENTRY(ListItem) entries;
     char name[MAX_PATH];
     char path[MAX_PATH];
     int type;
 } ListItem;
 
+TAILQ_HEAD(ListHead, ListItem);
+
 typedef struct List {
-    ListItem *head;
+    struct ListHead head;
     int size;
     char path[MAX_PATH];
 } List;
