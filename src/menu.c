@@ -172,10 +172,6 @@ static int menu_input() {
     uint32_t input = get_input();
     List *list = menu_get_list();
 
-    if (input & INPUT_QUIT) {
-        return INPUT_QUIT;
-    }
-
     if (input & CONT_DPAD_UP) {
         if (highlight_index <= line_max / 2 && list_index > 0) {
             list_index--;
@@ -275,24 +271,13 @@ static int menu_input() {
 }
 
 void menu_run() {
-
-    uint32_t input = 0;
-
     menu_init();
 
     while (1) {
-
-        input = menu_input();
-        if (input & INPUT_QUIT) {
-            break;
-        }
-
+        menu_input();
         draw_start();
-
         menu_draw();
-
         draw_back();
-
         draw_end();
     }
 }
