@@ -31,11 +31,6 @@ ifneq ($(DISC_SUPPORT),0)
     OBJS += src/disc.o
 endif
 
-ifeq ("$(FAT_LIBRARY)","fatfs")
-    OBJS += src/fatfs/dc.o src/fatfs/dc_bdev.o src/fatfs/ff.o \
-            src/fatfs/option/ccsbcs.o src/fatfs/option/syscall.o
-endif
-
 ###### Libraries ###################################################################################
 
 LIBS = -lpng -lz -lm
@@ -44,9 +39,9 @@ ifeq ("$(FAT_LIBRARY)","kosfat")
     LIBS += -lkosfat
 endif
 
-#ifeq ("$(FAT_LIBRARY)","fatfs")
-#    LIBS += -lfatfs
-#endif
+ifeq ("$(FAT_LIBRARY)","fatfs")
+    LIBS += -lfatfs
+endif
 
 ###### Resources ###################################################################################
 

@@ -11,7 +11,7 @@
 #include <dc/sd.h>
 
 #ifdef FAT_LIBRARY_FATFS
-#include "fatfs/fatfs.h"
+#include <fatfs.h>
 #endif
 
 #ifdef FAT_LIBRARY_KOSFAT
