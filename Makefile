@@ -21,7 +21,11 @@ HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
 
 ###### Objects #####################################################################################
 
-OBJS = src/main.o src/menu.o src/log.o src/utility.o src/bmfont.o src/drawing.o src/input.o
+OBJS = src/main.o src/menu.o src/log.o src/utility.o src/drawing.o src/input.o
+
+ifeq ($(ROMFONT),0)
+    OBJS += src/bmfont.o
+endif
 
 ifneq ($(DISC_SUPPORT),0)
     OBJS += src/disc.o
@@ -51,7 +55,12 @@ RESOURCE_DIR = res
 KOS_ROMDISK_DIR = romdisk
 
 WALLPAPER_FILE = $(WALLPAPER_SHADE)-wall-$(WALLPAPER_RES).png
-ROMDISK_FILES = ebdragon.fnt ebdragon.tex $(WALLPAPER_FILE)
+ROMDISK_FILES = $(WALLPAPER_FILE)
+
+ifeq ($(ROMFONT),0)
+    ROMDISK_FILES += ebdragon.fnt ebdragon.tex
+endif
+
 GZ_ROMDISK_FILES = dcload-ip.bin dcload-serial.bin
 
 ifneq ($(DISC_SUPPORT),0)
@@ -69,6 +78,10 @@ endif
 
 ifneq ($(DISC_SUPPORT),0)
     KOS_CFLAGS += -DDISC_SUPPORT
+endif
+
+ifneq ($(ROMFONT),0)
+    KOS_CFLAGS += -DROMFONT
 endif
 
 ifeq ("$(FAT_LIBRARY)","kosfat")

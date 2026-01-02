@@ -1,14 +1,15 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include <dc/biosfont.h>
+
 #include <png/png.h>
 
 #include "bmfont.h"
 #include "drawing.h"
 #include "log.h"
 
-static BMFont bmf_font;
-static pvr_ptr_t bmf_tex = NULL;
+static pvr_ptr_t font_tex = NULL;
 
 pvr_init_params_t params = {
         {PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_32, PVR_BINSIZE_0, PVR_BINSIZE_0},
@@ -73,8 +74,27 @@ void draw_back(void) {
     pvr_prim(&vert, sizeof(vert));
 }
 
-static void draw_init_font() {
+#ifndef ROMFONT
+static BMFont bmf_font;
+#endif
 
+static void draw_init_font() {
+#ifdef ROMFONT
+    /* Draw biosfont to a texture in vram */
+    uint16_t *vram;
+    int x, y;
+
+    font_tex = pvr_mem_malloc(256*256*2);
+    vram = (uint16_t *)font_tex;
+
+    for (y = 0; y < 8; y++) {
+        for (x = 0; x < 16; x++) {
+            bfont_draw(vram, 256, 0, y*16 + x);
+            vram += 16;
+        }
+        vram += 23*256;
+    }
+#else
     FILE *fp;
     tex_header_t hdr;
 
@@ -91,57 +111,108 @@ static void draw_init_font() {
     // read "texconv" texture header
     fread(&hdr, sizeof(hdr), 1, fp);
     // allocate pvr mem
-    bmf_tex = pvr_mem_malloc(hdr.size);
+    font_tex = pvr_mem_malloc(hdr.size);
     // read "texconv" texture to pvr mem
-    fread(bmf_tex, hdr.size, 1, fp);
+    fread(font_tex, hdr.size, 1, fp);
 
     // all done
     fclose(fp);
+#endif
 }
 
-static void draw_char(float x1, float y1, float z1, Color color, BMFontChar *c) {
-
+static size_t draw_char(float x1, float y1, float z1, Color color, int c) {
+#ifdef ROMFONT
     pvr_vertex_t vert;
+    int ix, iy;
+    float u1, v1, u2, v2;
+
+    ix = (c % 16) * 16;
+    iy = (c / 16) * 24;
+    u1 = ix * 1.0f / 256.0f;
+    v1 = iy * 1.0f / 256.0f;
+    u2 = (ix+12) * 1.0f / 256.0f;
+    v2 = (iy+24) * 1.0f / 256.0f;
 
     vert.flags = PVR_CMD_VERTEX;
-    vert.x = x1 + (float) c->xoffset;
-    vert.y = y1 + (float) c->height + (float) c->yoffset;
+    vert.x = x1;
+    vert.y = y1 + ROMFONT_HEIGHT;
     vert.z = z1;
-    vert.u = (float) c->x / (float) bmf_font.common.scaleW;
-    vert.v = (float) (c->y + c->height) / (float) bmf_font.common.scaleH;
+    vert.u = u1;
+    vert.v = v2;
     vert.argb = DRAW_PACK_COLOR(color.a, color.r, color.g, color.b);
     vert.oargb = 0;
     pvr_prim(&vert, sizeof(vert));
 
-    vert.x = x1 + (float) c->xoffset;
-    vert.y = y1 + (float) c->yoffset;
-    vert.u = (float) c->x / (float) bmf_font.common.scaleW;
-    vert.v = (float) c->y / (float) bmf_font.common.scaleH;
+    vert.x = x1;
+    vert.y = y1;
+    vert.u = u1;
+    vert.v = v1;
     pvr_prim(&vert, sizeof(vert));
 
-    vert.x = x1 + (float) (c->width + c->xoffset);
-    vert.y = y1 + (float) (c->height + c->yoffset);
-    vert.u = (float) (c->x + c->width) / (float) bmf_font.common.scaleW;
-    vert.v = (float) (c->y + c->height) / (float) bmf_font.common.scaleH;
+    vert.x = x1 + ROMFONT_WIDTH;
+    vert.y = y1 + ROMFONT_HEIGHT;
+    vert.u = u2;
+    vert.v = v2;
     pvr_prim(&vert, sizeof(vert));
 
     vert.flags = PVR_CMD_VERTEX_EOL;
-    vert.x = x1 + (float) (c->width + c->xoffset);
-    vert.y = y1 + (float) c->yoffset;
-    vert.u = (float) (c->x + c->width) / (float) bmf_font.common.scaleW;
-    vert.v = (float) c->y / (float) bmf_font.common.scaleH;
+    vert.x = x1 + ROMFONT_WIDTH;
+    vert.y = y1;
+    vert.u = u2;
+    vert.v = v1;
     pvr_prim(&vert, sizeof(vert));
+
+    return ROMFONT_WIDTH;
+#else
+    pvr_vertex_t vert;
+
+    BMFontChar *bmf_char = &bmf_font.chars[c];
+
+    vert.flags = PVR_CMD_VERTEX;
+    vert.x = x1 + (float) bmf_char->xoffset;
+    vert.y = y1 + (float) bmf_char->height + (float) bmf_char->yoffset;
+    vert.z = z1;
+    vert.u = (float) bmf_char->x / (float) bmf_font.common.scaleW;
+    vert.v = (float) (bmf_char->y + bmf_char->height) / (float) bmf_font.common.scaleH;
+    vert.argb = DRAW_PACK_COLOR(color.a, color.r, color.g, color.b);
+    vert.oargb = 0;
+    pvr_prim(&vert, sizeof(vert));
+
+    vert.x = x1 + (float) bmf_char->xoffset;
+    vert.y = y1 + (float) bmf_char->yoffset;
+    vert.u = (float) bmf_char->x / (float) bmf_font.common.scaleW;
+    vert.v = (float) bmf_char->y / (float) bmf_font.common.scaleH;
+    pvr_prim(&vert, sizeof(vert));
+
+    vert.x = x1 + (float) (bmf_char->width + bmf_char->xoffset);
+    vert.y = y1 + (float) (bmf_char->height + bmf_char->yoffset);
+    vert.u = (float) (bmf_char->x + bmf_char->width) / (float) bmf_font.common.scaleW;
+    vert.v = (float) (bmf_char->y + bmf_char->height) / (float) bmf_font.common.scaleH;
+    pvr_prim(&vert, sizeof(vert));
+
+    vert.flags = PVR_CMD_VERTEX_EOL;
+    vert.x = x1 + (float) (bmf_char->width + bmf_char->xoffset);
+    vert.y = y1 + (float) bmf_char->yoffset;
+    vert.u = (float) (bmf_char->x + bmf_char->width) / (float) bmf_font.common.scaleW;
+    vert.v = (float) bmf_char->y / (float) bmf_font.common.scaleH;
+    pvr_prim(&vert, sizeof(vert));
+
+    return (float) (bmf_char->xadvance + bmf_char->xoffset);
+#endif
 }
 
 /* draw len chars at string */
 void draw_string(float x, float y, float z, Color color, char *str) {
-
     int i, len;
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t poly;
 
+#ifdef ROMFONT
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB1555 | PVR_TXRFMT_NONTWIDDLED,
+#else
     pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB1555 | PVR_TXRFMT_VQ_ENABLE,
-                     256, 256, bmf_tex, PVR_FILTER_NONE);
+#endif
+                     256, 256, font_tex, PVR_FILTER_NONE);
     pvr_poly_compile(&poly, &cxt);
     pvr_prim(&poly, sizeof(poly));
 
@@ -151,9 +222,7 @@ void draw_string(float x, float y, float z, Color color, char *str) {
         if (!(c > 31 && c < 127)) {
             continue;
         }
-        BMFontChar bmfChar = bmf_font.chars[(int) c];
-        draw_char(x, y, z, color, &bmfChar);
-        x += (float) (bmfChar.xadvance + bmfChar.xoffset);
+        x += draw_char(x, y, z, color, c);
     }
 }
 
@@ -201,8 +270,8 @@ void draw_init() {
 }
 
 void draw_exit() {
-    if (bmf_tex != NULL) {
-        pvr_mem_free(bmf_tex);
+    if (font_tex != NULL) {
+        pvr_mem_free(font_tex);
     }
 }
 
@@ -222,8 +291,7 @@ Vec2 draw_get_screen_size() {
 }
 
 int draw_printf(int level, const char *fmt, ...) {
-
-    if (bmf_tex == NULL) {
+    if (font_tex == NULL) {
         return 0;
     }
 
