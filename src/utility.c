@@ -12,6 +12,10 @@ KOS_INIT_FLAGS(INIT_IRQ | INIT_THD_PREEMPT | INIT_FS_ALL | \
 
 void dash_log(int level, const char *fmt, ...);
 
+#ifdef dbglog
+#undef dbglog
+#endif
+
 #define dbglog(lv, fmt, ...) dash_log(lv, fmt, ##__VA_ARGS__)
 
 int list_cmp(ListItem *a, ListItem *b) {
