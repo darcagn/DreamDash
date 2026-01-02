@@ -259,7 +259,7 @@ void *decompress_file(const char *file, int output_size) {
 
     void *buffer = malloc(output_size);
     if(!buffer) {
-        dash_log(DBG_ERROR, "Error in memalign!");
+        dash_log(DBG_ERROR, "Error in malloc!");
         return NULL;
     }
 
