@@ -34,7 +34,7 @@ static void set_info() {
     cdrom_get_status(&status, &disc_type);
 
     if(disc_type == CD_CDROM_XA) {
-        CDROM_TOC toc;
+        cd_toc_t toc;
 
         if(cdrom_read_toc(&toc, 0) != ERR_OK) {
             printf("Error reading disc TOC!\n");
@@ -100,7 +100,9 @@ printf("\nDisc header info:\n"
     fflush(stdout);
 }
 
-static void *check_gdrom() {
+static void *check_gdrom(void *unused) {
+    (void)unused;
+
     cdrom_init();
 
     while(!kill_gdrom_thd) {
