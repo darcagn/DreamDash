@@ -7,9 +7,6 @@
 #include "drawing.h"
 #include "utility.h"
 
-KOS_INIT_FLAGS(INIT_IRQ | INIT_THD_PREEMPT | INIT_FS_ALL | \
-               INIT_LIBRARY | INIT_CDROM | INIT_CONTROLLER | INIT_VMU);
-
 int list_cmp(ListItem *a, ListItem *b) {
 
     if (a->type == TYPE_DIR && b->type != TYPE_DIR) {

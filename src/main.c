@@ -1,54 +1,16 @@
-#include <kos.h>
+#include <kos/init.h>
+
+#include <dc/maple/controller.h>
 
 #include "disc.h"
 #include "drawing.h"
 #include "input.h"
 #include "menu.h"
+#include "storage.h"
 #include "utility.h"
 
-#include <dc/g1ata.h>
-#include <dc/sd.h>
-
-#ifdef FAT_LIBRARY_FATFS
-#include <fatfs.h>
-#endif
-
-#ifdef FAT_LIBRARY_KOSFAT
-#include <fat/fs_fat.h>
-
-static kos_blockdev_t sd_dev;
-static kos_blockdev_t ide_dev;
-
-void sdcard_init(void) {
-    uint8_t partition_type;
-
-    if (sd_init())
-        return;
-
-    if (sd_blockdev_for_partition(0, &sd_dev, &partition_type))
-        return;
-
-    if (fs_fat_mount("/sd", &sd_dev, FS_FAT_MOUNT_READWRITE))
-        return;
-
-    dbglog(DBG_INFO, "mounted sd card at /sd\n");
-}
-
-void ide_init(void) {
-    uint8_t partition_type;
-
-    if (g1_ata_init())
-        return;
-
-    if (g1_ata_blockdev_for_partition(0, 1, &ide_dev, &partition_type))
-        return;
-
-    if (fs_fat_mount("/ide", &ide_dev, FS_FAT_MOUNT_READWRITE))
-        return;
-
-    dbglog(DBG_INFO, "mounted ide partition at /ide\n");
-}
-#endif
+KOS_INIT_FLAGS(INIT_IRQ |INIT_THD_PREEMPT | INIT_FS_ALL | \
+               INIT_LIBRARY | INIT_CDROM | INIT_CONTROLLER | INIT_VMU);
 
 int main(int argc, char **argv) {
     uint32_t keys = get_input();
@@ -58,16 +20,7 @@ int main(int argc, char **argv) {
         launch_dcload_ip();
     }
 
-#ifdef FAT_LIBRARY_KOSFAT
-    fs_fat_init();
-    ide_init();
-    sdcard_init();
-#endif
-
-#ifdef FAT_LIBRARY_FATFS
-    fs_fat_mount_ide();
-    fs_fat_mount_sd();
-#endif
+    storage_init();
 
 #ifdef DISC_SUPPORT
     disc_init();
@@ -88,6 +41,8 @@ int main(int argc, char **argv) {
 #endif
 
     draw_exit();
+
+    storage_shutdown();
 
     return 0;
 }

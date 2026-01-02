@@ -21,7 +21,7 @@ HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
 
 ###### Objects #####################################################################################
 
-OBJS = src/main.o src/menu.o src/log.o src/utility.o src/drawing.o src/input.o
+OBJS = src/main.o src/menu.o src/log.o src/utility.o src/drawing.o src/input.o src/storage.o
 
 ifeq ($(ROMFONT),0)
     OBJS += src/bmfont.o
