@@ -36,12 +36,12 @@ static void set_info() {
         cd_toc_t toc;
 
         if(cdrom_read_toc(&toc, 0) != ERR_OK) {
-            printf("Error reading disc TOC!\n");
+            dbglog(DBG_ERROR, "Error reading disc TOC!\n");
             return;
         }
 
         if(!(lba = cdrom_locate_data_track(&toc))) {
-            printf("Error locating data track on disc!\n");
+            dbglog(DBG_ERROR, "Error locating data track on disc!\n");
             return;
         }
     }
@@ -52,7 +52,7 @@ static void set_info() {
         if(cmd_response == ERR_DISC_CHG || cmd_response == ERR_NO_DISC) {
             return;
         } else {
-            printf("Error %d reading disc at LBA %d\n", cmd_response, lba);
+            dbglog(DBG_ERROR, "Error %d reading disc at LBA %d\n", cmd_response, lba);
             return;
         }
     }
@@ -60,11 +60,12 @@ static void set_info() {
     ip_info = (ip_meta_t *) pbuff;
 
     if(strncmp(ip_info->hardware_ID, "SEGA", 4)) {
-        printf("No valid initial program (IP.BIN) found.\n");
+        dbglog(DBG_ERROR, "No valid initial program (IP.BIN) found.\n");
         return;
      }
 
-printf("\nDisc header info:\n"
+dbglog(DBG_INFO,
+       ("\nDisc header info:\n"
        "\tHardware ID:\t%.*s\n"
        "\tMaker ID:\t%.*s\n"
        "\tHeader CRC:\t%.*s\n"
@@ -110,7 +111,7 @@ static void *check_gdrom(void *unused) {
                 case CD_STATUS_OPEN:
                 case CD_STATUS_NO_DISC:
                 if(ip_info) {
-                    printf("\nPlease insert disc and close drive lid...\n");
+                    dbglog(DBG_INFO, "\nPlease insert disc and close drive lid...\n");
                     ip_info = NULL;
                 }
                 break;
@@ -131,18 +132,18 @@ static void *check_gdrom(void *unused) {
 }
 
 void disc_launch(void) {
-    printf("Shutting down KOS and lauching disc... have fun!\n\n");
+    dbglog(DBG_INFO, ("Shutting down KOS and lauching disc... have fun!\n\n");
 
     /* Open syscalls patch */
     gzFile rungz = gzopen(RUNGZ_FILE, "rb");
     if(!rungz) {
-        dbglog(DBG_ERROR, "Error opening %s!", RUNGZ_FILE);
+        dbglog(DBG_ERROR, "Error opening %s!\n", RUNGZ_FILE);
         return;
     }
 
     /* Decompress patched syscalls into place */
     if(gzread(rungz, (void *)0x8C000100, RUNGZ_SIZE) != RUNGZ_SIZE) {
-        dbglog(DBG_ERROR, "Error decompressing %s!", RUNGZ_FILE);
+        dbglog(DBG_ERROR, "Error decompressing %s\n!", RUNGZ_FILE);
         return;
     }
 
@@ -166,15 +167,15 @@ void disc_shutdown(void) {
 
 int disc_init(void) {
     // TODO: Check if GD-ROM drive is available is available
-    // If not, dbglog(DBG_INFO, "No GD-ROM drive found."); return -1;
+    // If not, dbglog(DBG_ERROR, "No GD-ROM drive found.\n"); return -1;
 
     if(!file_exists("/rd/rungd.bin.gz")) {
-        dbglog(DBG_ERROR, "Error accessing rungd.bin.gz!");
+        dbglog(DBG_ERROR, "Error accessing rungd.bin.gz!\n");
     }
 
     check_gdrom_thd = thd_create(1, check_gdrom, NULL);
 
-    dbglog(DBG_INFO, "GD-ROM initialized.");
+    dbglog(DBG_INFO, "GD-ROM initialized.\n");
 
     return 0;
 }

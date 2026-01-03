@@ -28,7 +28,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
                &bmFont->info.spacing[0], &bmFont->info.spacing[1], &bmFont->info.outline) != 16) {
         fclose(fd);
         free(lineBuf);
-        printf("sscanf failed on info\n");
+        dbglog(DBG_ERROR, "sscanf failed on info\n");
         return -1;
     }
 
@@ -47,7 +47,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
                &bmFont->common.redChnl, &bmFont->common.greenChnl, &bmFont->common.blueChnl) != 10) {
         fclose(fd);
         free(lineBuf);
-        printf("sscanf failed on common\n");
+        dbglog(DBG_ERROR, "sscanf failed on common\n");
         return -1;
     }
 
@@ -60,7 +60,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
     if (sscanf(lineBuf, "page id=%d file=\"%[^\"]\"\n", &bmFont->page.id, (char *) &bmFont->page.file) != 2) {
         fclose(fd);
         free(lineBuf);
-        printf("sscanf failed on page\n");
+        dbglog(DBG_ERROR, "sscanf failed on page\n");
         return -1;
     }
 
@@ -73,7 +73,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
     if (sscanf(lineBuf, "chars count=%d\n", &bmFont->charsCount) != 1) {
         fclose(fd);
         free(lineBuf);
-        printf("sscanf failed on chars count\n");
+        dbglog(DBG_ERROR, "sscanf failed on chars count\n");
         return -1;
     }
 
@@ -112,7 +112,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
                    &bmFont->chars[id].page, &bmFont->chars[id].chnl) != 10) {
             fclose(fd);
             free(lineBuf);
-            printf("sscanf failed on char[%i]\n", i);
+            dbglog(DBG_ERROR, "sscanf failed on char[%i]\n", i);
             return -1;
         }
     }

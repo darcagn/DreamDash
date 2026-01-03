@@ -212,7 +212,7 @@ char *read_file(const char *file, int *size) {
 
     fd = fs_open(file, O_RDONLY);
     if (fd == FILEHND_INVALID) {
-        printf("read_file: can't open %s\n", file);
+        dbglog(DBG_ERROR, "read_file: can't open %s\n", file);
         if (size != NULL) {
             *size = 0;
         }
@@ -226,7 +226,7 @@ char *read_file(const char *file, int *size) {
     if (fs_read(fd, buffer, fsize) != fsize) {
         fs_close(fd);
         free(buffer);
-        printf("read_file: can't read %s\n", file);
+        dbglog(DBG_ERROR, "read_file: can't read %s\n", file);
         if (size != NULL) {
             *size = 0;
         }
@@ -246,18 +246,18 @@ void *decompress_file(const char *file, int output_size) {
     gzFile gzfile = gzopen(file, "rb");
 
     if(!gzfile) {
-        dbglog(DBG_ERROR, "Error opening %s!", file);
+        dbglog(DBG_ERROR, "Error opening %s!\n", file);
         return NULL;
     }
 
     void *buffer = malloc(output_size);
     if(!buffer) {
-        dbglog(DBG_ERROR, "Error in malloc!");
+        dbglog(DBG_ERROR, "Error in malloc!\n");
         return NULL;
     }
 
     if(gzread(gzfile, buffer, output_size) != output_size) {
-        dbglog(DBG_ERROR, "Error decompressing %s!", file);
+        dbglog(DBG_ERROR, "Error decompressing %s\n!", file);
         return NULL;
     }
 

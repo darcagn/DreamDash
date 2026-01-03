@@ -1,6 +1,8 @@
 #ifndef BMFONTLIB_BMFONT_H
 #define BMFONTLIB_BMFONT_H
 
+#include <kos/dbglog.h>
+
 #define BMF_MAX_PATH 512
 #define BMF_MAX_CHAR 128
 
