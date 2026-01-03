@@ -15,10 +15,6 @@ else
     endif
 endif
 
-###### Pre-Checks ##################################################################################
-
-HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
-
 ###### Objects #####################################################################################
 
 OBJS = src/main.o src/menu.o src/log.o src/utility.o src/drawing.o src/input.o src/storage.o
@@ -49,22 +45,38 @@ RELEASE_DIR = release
 RESOURCE_DIR = res
 KOS_ROMDISK_DIR = romdisk
 
-WALLPAPER_FILE = $(WALLPAPER_SHADE)-wall-$(WALLPAPER_RES).png
+DCLOAD_IP_BIN = dcload-ip.bin
+DCLOAD_SERIAL_BIN = dcload-serial.bin
+
+WALLPAPER_FILE = $(WALLPAPER_NAME).png
 ROMDISK_FILES = $(WALLPAPER_FILE)
 
 ifeq ($(ROMFONT),0)
     ROMDISK_FILES += $(BMFONT_NAME).fnt $(BMFONT_NAME).tex
 endif
 
-GZ_ROMDISK_FILES = dcload-ip.bin dcload-serial.bin
+GZ_ROMDISK_FILES = $(DCLOAD_IP_BIN) $(DCLOAD_SERIAL_BIN)
 
 ifneq ($(DISC_SUPPORT),0)
     GZ_ROMDISK_FILES += rungd.bin
 endif
 
+###### Information Gathering #######################################################################
+
+HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
+
+WALLPAPER_SIZE := $(shell file $(RESOURCE_DIR)/$(WALLPAPER_NAME).png | grep -oE '[0-9]+ x [0-9]+' | head -1)
+WALLPAPER_WIDTH := $(firstword $(WALLPAPER_SIZE))
+WALLPAPER_HEIGHT := $(lastword $(WALLPAPER_SIZE))
+
+DCLOAD_IP_BINSIZE := $(shell wc -c < $(RESOURCE_DIR)/$(DCLOAD_IP_BIN))
+DCLOAD_SERIAL_BINSIZE := $(shell wc -c < $(RESOURCE_DIR)/$(DCLOAD_SERIAL_BIN))
+
 ###### Flags #######################################################################################
 
-KOS_CFLAGS += -DWALLPAPER_FILE="$(WALLPAPER_FILE)" -DWALLPAPER_RES=$(WALLPAPER_RES)
+KOS_CFLAGS += -DWALLPAPER_FILE="$(WALLPAPER_NAME).png"
+KOS_CFLAGS += -DWALLPAPER_WIDTH=$(WALLPAPER_WIDTH) -DWALLPAPER_HEIGHT=$(WALLPAPER_HEIGHT)
+KOS_CFLAGS += -DDCLOAD_IP_BINSIZE=$(DCLOAD_IP_BINSIZE) -DDCLOAD_SERIAL_BINSIZE=$(DCLOAD_SERIAL_BINSIZE)
 KOS_CFLAGS += -DDASH_VERSION="$(VERSION)"
 KOS_CFLAGS += -DBMFONT_NAME="$(BMFONT_NAME)"
 

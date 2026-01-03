@@ -309,9 +309,9 @@ void launch_dreamshell(void) {
 }
 
 void launch_dcload_serial(void) {
-    exec_gz("/rd/dcload-serial.bin.gz", 15776);
+    exec_gz("/rd/dcload-serial.bin.gz", DCLOAD_SERIAL_BINSIZE);
 }
 
 void launch_dcload_ip(void) {
-    exec_gz("/rd/dcload-ip.bin.gz", 23736);
+    exec_gz("/rd/dcload-ip.bin.gz", DCLOAD_IP_BINSIZE);
 }
