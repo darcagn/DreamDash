@@ -65,7 +65,7 @@ static void set_info() {
      }
 
 dbglog(DBG_INFO,
-       ("\nDisc header info:\n"
+       "\nDisc header info:\n"
        "\tHardware ID:\t%.*s\n"
        "\tMaker ID:\t%.*s\n"
        "\tHeader CRC:\t%.*s\n"
@@ -132,7 +132,7 @@ static void *check_gdrom(void *unused) {
 }
 
 void disc_launch(void) {
-    dbglog(DBG_INFO, ("Shutting down KOS and lauching disc... have fun!\n\n");
+    dbglog(DBG_INFO, "Shutting down KOS and lauching disc... have fun!\n\n");
 
     /* Open syscalls patch */
     gzFile rungz = gzopen(RUNGZ_FILE, "rb");
