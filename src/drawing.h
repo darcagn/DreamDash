@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#include <kos/dbglog.h>
-
 #define ROMFONT_WIDTH 	12
 #define ROMFONT_HEIGHT 	24
 #define DRAW_FONT_WIDTH 12.0f
@@ -76,7 +74,7 @@ void draw_box(float x, float y, float w, float h, float z, Color color);
 void draw_box_outline(float x, float y, float w, float h, float z,
                       Color color, Color outline_color, float outline_size);
 
-int draw_printf(int level, const char *fmt, ...);
+int draw_printf(const char *fmt, ...);
 
 Vec2 draw_get_screen_size();
 

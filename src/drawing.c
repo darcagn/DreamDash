@@ -289,7 +289,7 @@ Vec2 draw_get_screen_size() {
     return (Vec2) {640, 480};
 }
 
-int draw_printf(int level, const char *fmt, ...) {
+int draw_printf(const char *fmt, ...) {
     if (font_tex == NULL) {
         return 0;
     }
@@ -303,18 +303,6 @@ int draw_printf(int level, const char *fmt, ...) {
     va_start(args, fmt);
     int ret = vsnprintf(buff, 512, fmt, args);
     va_end(args);
-
-    switch (level) {
-        case DBG_DEAD:
-        case DBG_ERROR:
-        case DBG_CRITICAL:
-            color = COL_RED;
-            break;
-        case DBG_WARNING:
-            color = COL_YELLOW;
-        default:
-            break;
-    }
 
     draw_start();
     draw_string(16, screenSize.y - DRAW_FONT_HEIGHT - 16, 200, color, buff);

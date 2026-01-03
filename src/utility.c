@@ -268,7 +268,7 @@ void *decompress_file(const char *file, int output_size) {
 
 void exec(const char *path) {
 
-    draw_printf(DBG_INFO, "LOADING: %s\n", path);
+    draw_printf("LOADING: %s\n", path);
 
     int size = 0;
     char *bin = read_file(path, &size);
@@ -281,7 +281,7 @@ void exec(const char *path) {
 }
 
 void exec_gz(const char *path, size_t size) {
-    draw_printf(DBG_INFO, "LOADING: %s\n", path);
+    draw_printf("LOADING: %s\n", path);
 
     char *bin = decompress_file(path, size);
     if (bin == NULL || size < 1) {
