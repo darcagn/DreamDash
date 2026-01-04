@@ -119,7 +119,7 @@ static void draw_init_font() {
 #endif
 }
 
-static size_t draw_char(float x1, float y1, float z1, Color color, int c) {
+static size_t draw_char(float x1, float y1, float z1, color_t color, int c) {
 #ifdef ROMFONT
     pvr_vertex_t vert;
     int ix, iy;
@@ -201,7 +201,7 @@ static size_t draw_char(float x1, float y1, float z1, Color color, int c) {
 }
 
 /* draw len chars at string */
-void draw_string(float x, float y, float z, Color color, char *str) {
+void draw_string(float x, float y, float z, color_t color, char *str) {
     int i, len;
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t poly;
@@ -226,7 +226,7 @@ void draw_string(float x, float y, float z, Color color, char *str) {
 }
 
 /* draw a box (used by cursor and border, etc) (at 1.0f z coord) */
-void draw_box(float x, float y, float w, float h, float z, Color color) {
+void draw_box(float x, float y, float w, float h, float z, color_t color) {
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t poly;
     pvr_vertex_t vert;
@@ -256,8 +256,8 @@ void draw_box(float x, float y, float w, float h, float z, Color color) {
     pvr_prim(&vert, sizeof(vert));
 }
 
-void draw_box_outline(float x, float y, float w, float h, float z, Color color,
-                      Color outline_color, float outline_size) {
+void draw_box_outline(float x, float y, float w, float h, float z, color_t color,
+                      color_t outline_color, float outline_size) {
 
     draw_box(x - outline_size, y - outline_size, w + (outline_size * 2), h + (outline_size * 2), z - 1, outline_color);
     draw_box(x, y, w, h, z, color);
@@ -285,10 +285,6 @@ void draw_end() {
     pvr_scene_finish();
 }
 
-Vec2 draw_get_screen_size() {
-    return (Vec2) {640, 480};
-}
-
 int draw_printf(const char *fmt, ...) {
     if (font_tex == NULL) {
         return 0;
@@ -296,8 +292,7 @@ int draw_printf(const char *fmt, ...) {
 
     char buff[512];
     va_list args;
-    Color color = COL_WHITE;
-    Vec2 screenSize = draw_get_screen_size();
+    color_t color = COL_WHITE;
 
     memset(buff, 0, 512);
     va_start(args, fmt);
@@ -305,7 +300,7 @@ int draw_printf(const char *fmt, ...) {
     va_end(args);
 
     draw_start();
-    draw_string(16, screenSize.y - DRAW_FONT_HEIGHT - 16, 200, color, buff);
+    draw_string(16, DRAW_SCREEN_HEIGHT - DRAW_FONT_HEIGHT - 16, 200, color, buff);
     draw_end();
 
     return ret;

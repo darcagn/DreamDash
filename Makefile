@@ -17,7 +17,9 @@ endif
 
 ###### Objects #####################################################################################
 
-OBJS = src/main.o src/menu.o src/log.o src/utility.o src/drawing.o src/input.o src/storage.o
+OBJS = src/dreamdash.o
+OBJS += src/drawing.o src/input.o src/storage.o src/utility.o
+OBJS += src/filer.o src/log.o src/mainmenu.o
 
 ifeq ($(ROMFONT),0)
     OBJS += src/bmfont.o

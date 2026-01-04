@@ -1,5 +1,5 @@
-#ifndef BMFONTLIB_BMFONT_H
-#define BMFONTLIB_BMFONT_H
+#ifndef DREAMDASH_BMFONT_H
+#define DREAMDASH_BMFONT_H
 
 #include <kos/dbglog.h>
 
@@ -70,4 +70,4 @@ typedef struct bmf_font_s {
 
 int bmf_parse(const char *fntPath, BMFont *bmFont);
 
-#endif //BMFONTLIB_BMFONT_H
+#endif //DREAMDASH_BMFONT_H

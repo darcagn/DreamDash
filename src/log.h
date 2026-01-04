@@ -1,4 +1,0 @@
-#ifndef DREAMDASH_LOG_H
-#define DREAMDASH_LOG_H
-
-#endif //DREAMDASH_LOG_H

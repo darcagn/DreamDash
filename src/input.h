@@ -1,6 +1,8 @@
-#ifndef LOADER_INPUT_H
-#define LOADER_INPUT_H
+#ifndef DREAMDASH_INPUT_H
+#define DREAMDASH_INPUT_H
+
+#include <dc/maple/controller.h>
 
 uint32_t get_input();
 
-#endif //LOADER_INPUT_H
+#endif //DREAMDASH_INPUT_H

@@ -7,81 +7,6 @@
 #include "drawing.h"
 #include "utility.h"
 
-int list_cmp(ListItem *a, ListItem *b) {
-
-    if (a->type == TYPE_DIR && b->type != TYPE_DIR) {
-        return -1;
-    } else if (a->type != TYPE_DIR && b->type == TYPE_DIR) {
-        return 1;
-    }
-
-    return strcasecmp(a->name, b->name);
-}
-
-/* Sort the list using insertion sort */
-static void list_sort(List *list) {
-    ListItem *item, *sorted_item, *temp;
-    struct ListHead sorted_head;
-
-    if (list->size <= 1) {
-        return;
-    }
-
-    TAILQ_INIT(&sorted_head);
-
-    /* Move all items to sorted list in order */
-    while (!TAILQ_EMPTY(&list->head)) {
-        item = TAILQ_FIRST(&list->head);
-        TAILQ_REMOVE(&list->head, item, entries);
-
-        /* Find insertion point */
-        if (TAILQ_EMPTY(&sorted_head)) {
-            TAILQ_INSERT_HEAD(&sorted_head, item, entries);
-        } else {
-            sorted_item = NULL;
-            TAILQ_FOREACH(temp, &sorted_head, entries) {
-                if (list_cmp(item, temp) < 0) {
-                    sorted_item = temp;
-                    break;
-                }
-            }
-
-            if (sorted_item != NULL) {
-                TAILQ_INSERT_BEFORE(sorted_item, item, entries);
-            } else {
-                TAILQ_INSERT_TAIL(&sorted_head, item, entries);
-            }
-        }
-    }
-
-    /* Move sorted items back to original list */
-    list->head = sorted_head;
-}
-
-void free_dir(List *list) {
-
-    ListItem *elt, *tmp;
-    TAILQ_FOREACH_SAFE(elt, &list->head, entries, tmp) {
-        TAILQ_REMOVE(&list->head, elt, entries);
-        free(elt);
-    }
-}
-
-ListItem *get_item(List *list, int index) {
-
-    ListItem *file;
-    int i = 0;
-
-    TAILQ_FOREACH(file, &list->head, entries) {
-        if (i == index) {
-            return file;
-        }
-        i++;
-    }
-
-    return NULL;
-}
-
 void try_boot() {
 
     // first check for boot config
@@ -124,57 +49,6 @@ void trim(char *str) {
             break;
         }
         str[i] = '\0';
-    }
-}
-
-void get_dir(List *list, const char *path) {
-
-    dirent_t *ent;
-    file_t fd;
-    ListItem *entry;
-
-    memset(list, 0, sizeof(List));
-    TAILQ_INIT(&list->head);
-    strncpy(list->path, path, MAX_PATH - 1);
-
-    if ((fd = fs_open(path, O_RDONLY | O_DIR)) != FILEHND_INVALID) {
-        while ((ent = fs_readdir(fd)) != NULL) {
-
-            // skip "."
-            if (ent->name[0] == '.') {
-                continue;
-            }
-
-            if (strncmp(ent->name, "dev", 3) == 0 || strncmp(ent->name, "pty", 3) == 0
-                || strncmp(ent->name, "ram", 3) == 0 || strncmp(ent->name, "pc", 2) == 0
-                || strncmp(ent->name, "cd", 2) == 0) {
-                continue;
-            }
-
-            entry = (ListItem *) malloc(sizeof(ListItem));
-            memset(entry, 0, sizeof(ListItem));
-
-            strncpy(entry->name, ent->name, MAX_PATH - 1);
-            if (list->path[strlen(list->path) - 1] != '/') {
-                snprintf(entry->path, MAX_PATH - 1, "%s/%s", list->path, ent->name);
-            } else {
-                snprintf(entry->path, MAX_PATH - 1, "%s%s", list->path, ent->name);
-            }
-
-            entry->type = ent->attr == O_DIR ? TYPE_DIR : TYPE_FILE;
-            if (entry->type == TYPE_FILE) {
-                if (strstr(entry->name, ".bin") != NULL || strstr(entry->name, ".BIN") != NULL ||
-                    strstr(entry->name, ".elf") != NULL || strstr(entry->name, ".ELF") != NULL) {
-                    entry->type = TYPE_BIN;
-                }
-            }
-
-            TAILQ_INSERT_TAIL(&list->head, entry, entries);
-            list->size++;
-        }
-
-        list_sort(list);
-        fs_close(fd);
     }
 }
 
