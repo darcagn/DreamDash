@@ -21,7 +21,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
     }
     // TODO: fix empty "charset"
     if (sscanf(lineBuf,
-               "info face=\"%[^\"]\" size=%d bold=%d italic=%d charset=\"%[^\"]\" unicode=%d stretchH=%d smooth=%d aa=%d padding=%d,%d,%d,%d spacing=%d,%d outline=%d\n",
+               "info face=\"%511[^\"]\" size=%d bold=%d italic=%d charset=\"%511[^\"]\" unicode=%d stretchH=%d smooth=%d aa=%d padding=%d,%d,%d,%d spacing=%d,%d outline=%d\n",
                (char *) &bmFont->info.face, &bmFont->info.size, &bmFont->info.bold, &bmFont->info.italic, (char *) &bmFont->info.charset,
                &bmFont->info.unicode, &bmFont->info.stretchH, &bmFont->info.smooth, &bmFont->info.aa,
                &bmFont->info.padding[0], &bmFont->info.padding[1], &bmFont->info.padding[2], &bmFont->info.padding[3],
@@ -57,7 +57,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
         free(lineBuf);
         return -1;
     }
-    if (sscanf(lineBuf, "page id=%d file=\"%[^\"]\"\n", &bmFont->page.id, (char *) &bmFont->page.file) != 2) {
+    if (sscanf(lineBuf, "page id=%d file=\"%511[^\"]\"\n", &bmFont->page.id, (char *) &bmFont->page.file) != 2) {
         fclose(fd);
         free(lineBuf);
         dbglog(DBG_ERROR, "sscanf failed on page\n");
@@ -92,10 +92,11 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
             return -1;
         }
         // extract for id
-        char *pos = strchr(lineBuf, '=') + 1;
-        if (pos == NULL) {
+        char *pos = strchr(lineBuf, '=');
+        if(!pos) {
             continue;
         }
+        pos++;
 
         memset(str_id, 0, 3);
         strncpy(str_id, pos, 3);
