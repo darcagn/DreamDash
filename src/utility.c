@@ -17,6 +17,7 @@ void try_boot() {
             if (file_exists(path)) {
                 exec(path);
             }
+            free(path);
         }
     } else if (file_exists("/ide/boot.cfg")) {
         char *path = read_file("/ide/boot.cfg", NULL);
@@ -25,6 +26,7 @@ void try_boot() {
             if (file_exists(path)) {
                 exec(path);
             }
+            free(path);
         }
     }
 
