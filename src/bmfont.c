@@ -98,7 +98,7 @@ int bmf_parse(const char *fntPath, BMFont *bmFont) {
         }
 
         memset(str_id, 0, 3);
-        snprintf(str_id, 3, "%s", pos);
+        strncpy(str_id, pos, 3);
         id = atoi(str_id);
         if (id >= BMF_MAX_CHAR) {
             continue;
