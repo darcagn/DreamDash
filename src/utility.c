@@ -129,11 +129,14 @@ void *decompress_file(const char *file, int output_size) {
     void *buffer = malloc(output_size);
     if(!buffer) {
         dbglog(DBG_ERROR, "Error in malloc!\n");
+        gzclose(gzfile);
         return NULL;
     }
 
     if(gzread(gzfile, buffer, output_size) != output_size) {
         dbglog(DBG_ERROR, "Error decompressing %s\n!", file);
+        free(buffer);
+        gzclose(gzfile);
         return NULL;
     }
 

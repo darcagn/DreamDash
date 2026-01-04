@@ -202,6 +202,10 @@ static size_t draw_char(float x1, float y1, float z1, color_t color, int c) {
 
 /* draw len chars at string */
 void draw_string(float x, float y, float z, color_t color, char *str) {
+    if(!str) {
+        return;
+    }
+
     int i, len;
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t poly;

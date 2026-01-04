@@ -183,6 +183,7 @@ static void filer_get_dir(char *path) {
             entry = calloc(1, sizeof *entry);
             if (!entry) {
                 dbglog(DBG_ERROR, "Error allocating mem in %s()!\n", __func__);
+                fs_close(fd);
                 break;
             }
 
