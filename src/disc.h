@@ -1,6 +1,8 @@
 #ifndef DREAMDASH_DISC_H
 #define DREAMDASH_DISC_H
 
+#include <stdbool.h>
+
 typedef struct ip_meta {
 	char hardware_ID[16];
 	char maker_ID[16];
@@ -22,9 +24,8 @@ typedef struct ip_meta {
 	char title[128];
 } ip_meta_t;
 
-extern ip_meta_t *ip_info;
-
 int disc_init(void);
+bool disc_ready(void);
 void disc_shutdown(void);
 void disc_launch(void);
 

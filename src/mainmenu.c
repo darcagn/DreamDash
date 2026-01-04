@@ -197,7 +197,7 @@ void mainmenu_input(void) {
 
 #ifdef DISC_SUPPORT
                 case MENU_DISC:
-                    if (ip_info) {
+                    if (disc_ready()) {
                         disc_launch();
                     }
                     break;

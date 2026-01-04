@@ -7,8 +7,16 @@
    Copyright (C)2024 SWAT
 */
 
-#include <kos.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <kos/dbglog.h>
+#include <kos/mutex.h>
+#include <kos/thread.h>
+
+#include <dc/cdrom.h>
+
 #include <zlib/zlib.h>
 
 #include "disc.h"
@@ -17,7 +25,10 @@
 #define RUNGZ_FILE "/rd/rungd.bin.gz"
 #define RUNGZ_SIZE 65280
 
-ip_meta_t *ip_info;
+static mutex_t ip_info_mutex = MUTEX_INITIALIZER;
+static ip_meta_t *ip_info;
+static char pbuff[2048];
+
 static int cmd_response;
 static int status;
 static int disc_type;
@@ -25,9 +36,9 @@ static int disc_type;
 kthread_t *check_gdrom_thd;
 int kill_gdrom_thd = 0;
 
-static void set_info() {
+/* mutex must be locked when this is called */
+static void set_info_locked() {
     int lba = 45150;
-    char pbuff[2048];
 
     cdrom_reinit();
     cdrom_get_status(&status, &disc_type);
@@ -61,43 +72,45 @@ static void set_info() {
 
     if(strncmp(ip_info->hardware_ID, "SEGA", 4)) {
         dbglog(DBG_ERROR, "No valid initial program (IP.BIN) found.\n");
+        ip_info = NULL;
         return;
      }
 
-dbglog(DBG_INFO,
-       "\nDisc header info:\n"
-       "\tHardware ID:\t%.*s\n"
-       "\tMaker ID:\t%.*s\n"
-       "\tHeader CRC:\t%.*s\n"
-       "\tDisc Number:\t%c of %c\n"
-       "\tRegion(s):\t%.*s\n"
-       "\tControl:\t%.*s\n"
-       "\tDevices:\t%.*s\n"
-       "\tVGA support:\t%s\n"
-       "\tWindows CE:\t%s\n"
-       "\tProduct ID:\t%.*s\n"
-       "\tVersion:\t%.*s\n"
-       "\tDate:\t\t%c%c%c%c-%c%c-%c%c\n"
-       "\tBoot file:\t%.*s\n"
-       "\tDeveloper:\t%.*s\n"
-       "\tTitle:\t\t%.*s\n",
-       16, ip_info->hardware_ID,
-       16, ip_info->maker_ID,
-       5, ip_info->ks,
-       ip_info->disk_num[0], ip_info->disk_num[2],
-       3, ip_info->country_codes,
-       4, ip_info->ctrl,
-       1, ip_info->dev,
-       ip_info->VGA[0] == '1' ? "Yes" : "No",
-       ip_info->WinCE[0] == '1' ? "Yes" : "No",
-       10, ip_info->product_ID,
-       6, ip_info->product_version,
-       ip_info->release_date[0], ip_info->release_date[1], ip_info->release_date[2], ip_info->release_date[3],
-       ip_info->release_date[4], ip_info->release_date[5], ip_info->release_date[6], ip_info->release_date[7],
-       16, ip_info->boot_file,
-       16, ip_info->software_maker_info,
-       128, ip_info->title);
-    fflush(stdout);
+    dbglog(DBG_INFO,
+        "\nDisc header info:\n"
+        "\tHardware ID:\t%.*s\n"
+        "\tMaker ID:\t%.*s\n"
+        "\tHeader CRC:\t%.*s\n"
+        "\tDisc Number:\t%c of %c\n"
+        "\tRegion(s):\t%.*s\n"
+        "\tControl:\t%.*s\n"
+        "\tDevices:\t%.*s\n"
+        "\tVGA support:\t%s\n"
+        "\tWindows CE:\t%s\n"
+        "\tProduct ID:\t%.*s\n"
+        "\tVersion:\t%.*s\n"
+        "\tDate:\t\t%c%c%c%c-%c%c-%c%c\n"
+        "\tBoot file:\t%.*s\n"
+        "\tDeveloper:\t%.*s\n"
+        "\tTitle:\t\t%.*s\n",
+        16, ip_info->hardware_ID,
+        16, ip_info->maker_ID,
+        5, ip_info->ks,
+        ip_info->disk_num[0], ip_info->disk_num[2],
+        3, ip_info->country_codes,
+        4, ip_info->ctrl,
+        1, ip_info->dev,
+        ip_info->VGA[0] == '1' ? "Yes" : "No",
+        ip_info->WinCE[0] == '1' ? "Yes" : "No",
+        10, ip_info->product_ID,
+        6, ip_info->product_version,
+        ip_info->release_date[0], ip_info->release_date[1], ip_info->release_date[2], ip_info->release_date[3],
+        ip_info->release_date[4], ip_info->release_date[5], ip_info->release_date[6], ip_info->release_date[7],
+        16, ip_info->boot_file,
+        16, ip_info->software_maker_info,
+        128, ip_info->title);
+
+        fflush(stdout);
 }
 
 static void *check_gdrom(void *unused) {
@@ -110,19 +123,24 @@ static void *check_gdrom(void *unused) {
             switch(status) {
                 case CD_STATUS_OPEN:
                 case CD_STATUS_NO_DISC:
-                if(ip_info) {
-                    dbglog(DBG_INFO, "\nPlease insert disc and close drive lid...\n");
-                    ip_info = NULL;
-                }
-                break;
-            default:
-                switch(disc_type) {
-                    case CD_CDROM_XA:
-                    case CD_GDROM:
-                        if(!ip_info)
-                            set_info();
-                        break;
-                }
+                    mutex_lock(&ip_info_mutex);
+                    if(ip_info) {
+                        dbglog(DBG_INFO, "\nPlease insert disc and close drive lid...\n");
+                        ip_info = NULL;
+                    }
+                    mutex_unlock(&ip_info_mutex);
+                    break;
+                default:
+                    switch(disc_type) {
+                        case CD_CDROM_XA:
+                        case CD_GDROM:
+                            mutex_lock(&ip_info_mutex);
+                            if(!ip_info)
+                                set_info_locked();
+                            mutex_unlock(&ip_info_mutex);
+                            break;
+                    }
+                    break;
             }
         }
         thd_pass();
@@ -144,6 +162,7 @@ void disc_launch(void) {
     /* Decompress patched syscalls into place */
     if(gzread(rungz, (void *)0x8C000100, RUNGZ_SIZE) != RUNGZ_SIZE) {
         dbglog(DBG_ERROR, "Error decompressing %s\n!", RUNGZ_FILE);
+        gzclose(rungz);
         return;
     }
 
@@ -158,6 +177,13 @@ void disc_launch(void) {
     /* Bye bye! */
     ((void (*)(volatile unsigned short))0x8C000120)(0xFFF);
     __builtin_unreachable();
+}
+
+bool disc_ready(void) {
+    mutex_lock(&ip_info_mutex);
+    bool ready = ip_info != NULL;
+    mutex_unlock(&ip_info_mutex);
+    return ready;
 }
 
 void disc_shutdown(void) {
