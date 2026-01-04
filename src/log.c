@@ -14,11 +14,15 @@
 #include "scene.h"
 #include "utility.h"
 
-/* TODO: Limit the number of logs, else we run out of memory */
-/* TODO: Limit the width of the displayed logs, creating newlines as necessary */
+#define MAX_LOG_LINES 500
 
 /* Maximum number of lines the console can display */
 static size_t line_display_max;
+
+/* Maximum width of a log line */
+/* TODO: Works well for romfont, but we should have
+         something better/variable for bitmap fonts */
+static size_t log_line_max_width = 46;
 
 /* Current line index displayed */
 static size_t line_index;
@@ -197,16 +201,37 @@ static int dash_log_dbgio_write(int c) {
     if (!line) {
         /* No items in the list, create the first one */
         line = dash_log_new_line();
+        if (!line) {
+            return 0;
+        }
     }
 
     /* Create a new item for a new line */
     if (c == '\n') {
+        if (dash_log.size >= MAX_LOG_LINES) {
+            log_line_t *old = TAILQ_FIRST(&dash_log.head);
+            TAILQ_REMOVE(&dash_log.head, old, entries);
+            free(old);
+            dash_log.size--;
+        }
         line = dash_log_new_line();
+        if (!line) {
+            return 0;
+        }
         return 1;
     }
 
     /* Find current length of the string */
     size_t len = strlen(line->text);
+
+    /* Check if adding this character would exceed width limit */
+    if (len >= log_line_max_width) {
+        line = dash_log_new_line();
+        if (!line) {
+            return 0;
+        }
+        len = 0;
+    }
 
     /* Check if there's room for one more character plus null terminator */
     if (len < MAX_PATH - 1) {
