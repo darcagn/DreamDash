@@ -2,6 +2,7 @@
 
 #include <dc/maple/controller.h>
 
+#include "bg.h"
 #include "disc.h"
 #include "dreamdash.h"
 #include "drawing.h"
@@ -27,12 +28,8 @@ int main(int argc, char **argv) {
 
     storage_init();
 
-#ifdef DISC_SUPPORT
-    disc_init();
-#endif
-
     draw_init();
-    back_init();
+    bg_init();
 
 #ifdef AUTOBOOT
     if (!(keys & CONT_START)) {
@@ -40,8 +37,13 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    mainmenu_init();
+#ifdef DISC_SUPPORT
+    disc_init();
+#endif
+#ifndef DISABLE_LOGGER
     log_init();
+#endif
+    mainmenu_init();
     filer_init();
 
     mainmenu_enter();
@@ -50,12 +52,13 @@ int main(int argc, char **argv) {
         scene_input_fn();
         draw_start();
         scene_draw_fn();
-        draw_back();
+        bg_run();
         draw_end();
     }
 
+    bg_exit();
     draw_exit();
-    storage_shutdown();
+    storage_exit();
 
     return 0;
 }

@@ -22,7 +22,9 @@ typedef enum mainmenu {
 #ifdef DISC_SUPPORT
     MENU_DISC,
 #endif
+#ifndef DISABLE_LOGGER
     MENU_LOGS
+#endif
 } mainmenu_id_t;
 
 static size_t line_display_max = 10;
@@ -83,13 +85,15 @@ void mainmenu_init(void) {
         menu_main_add_item("DreamShell", MENU_DREAMSHELL);
     }
 
-    menu_main_add_item("File Browser", MENU_FILER);
-    menu_main_add_item("dcload-ip", MENU_DCLOAD_IP);
-    menu_main_add_item("dcload-serial", MENU_DCLOAD_SERIAL);
 #ifdef DISC_SUPPORT
     menu_main_add_item("Play Disc", MENU_DISC);
 #endif
+    menu_main_add_item("File Browser", MENU_FILER);
+    menu_main_add_item("dcload-ip", MENU_DCLOAD_IP);
+    menu_main_add_item("dcload-serial", MENU_DCLOAD_SERIAL);
+#ifndef DISABLE_LOGGER
     menu_main_add_item("View Logs", MENU_LOGS);
+#endif
 }
 
 /* Enter the main menu scene */
@@ -142,8 +146,15 @@ void mainmenu_draw(void) {
     }
 
     /* Print version */
+
+    draw_string(17, DRAW_SCREEN_HEIGHT - DRAW_FONT_HEIGHT - 15,
+                103, COL_BLACK, "DreamDash BIOS v"DASH_VERSION);
+
     draw_string(16, DRAW_SCREEN_HEIGHT - DRAW_FONT_HEIGHT - 16,
-                103, COL_TRUE_BLUE, "DreamDash BIOS v"DASH_VERSION);
+                103, COL_WHITE, "DreamDash BIOS v"DASH_VERSION);
+
+    draw_string(17, DRAW_SCREEN_HEIGHT - DRAW_FONT_HEIGHT - 16,
+                103, COL_WHITE, "DreamDash BIOS v"DASH_VERSION);
 }
 
 void mainmenu_input(void) {
@@ -191,15 +202,15 @@ void mainmenu_input(void) {
                     filer_enter();
                     break;
 
+#ifndef DISABLE_LOGGER
                 case MENU_LOGS:
                     log_enter();
                     break;
+#endif
 
 #ifdef DISC_SUPPORT
                 case MENU_DISC:
-                    if (disc_ready()) {
-                        disc_launch();
-                    }
+                    disc_enter();
                     break;
 #endif
 

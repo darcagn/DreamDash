@@ -59,7 +59,7 @@ void storage_init(void) {
 #endif
 }
 
-void storage_shutdown(void) {
+void storage_exit(void) {
 #ifdef FAT_LIBRARY_KOSFAT
     fs_fat_unmount("/ide");
     g1_ata_shutdown();

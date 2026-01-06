@@ -1,4 +1,7 @@
-#include <kos.h>
+#include <stdint.h>
+
+#include <dc/maple.h>
+#include <dc/maple/controller.h>
 
 static uint32_t last_buttons = 0;
 

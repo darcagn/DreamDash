@@ -164,9 +164,7 @@ static void filer_get_dir(char *path) {
             /* Skip irrelevant devices */
             if (strncmp(ent->name, "dev", 3) == 0 ||
                 strncmp(ent->name, "pty", 3) == 0 ||
-                strncmp(ent->name, "ram", 3) == 0 ||
-                strncmp(ent->name,  "pc", 2) == 0 ||
-                strncmp(ent->name,  "cd", 2) == 0)
+                strncmp(ent->name, "ram", 3) == 0 )
             {
                 continue;
             }

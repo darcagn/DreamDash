@@ -21,10 +21,6 @@ typedef struct rect {
     float height;
 } rect_t;
 
-void back_init();
-
-void draw_back();
-
 void draw_init();
 
 void draw_exit();
@@ -39,6 +35,15 @@ void draw_box(float x, float y, float w, float h, float z, color_t color);
 
 void draw_box_outline(float x, float y, float w, float h, float z,
                       color_t color, color_t outline_color, float outline_size);
+
+void draw_rect(rect_t rect, float z, color_t color);
+
+void draw_rect_outline(rect_t rect, float z, color_t color,
+                       color_t outline_color, float outline_size);
+
+void draw_string_rect(rect_t rect, float z, color_t color, char *str);
+
+void draw_string_rect_line(rect_t rect, float z, color_t color, char *str, size_t line);
 
 int draw_printf(const char *fmt, ...);
 

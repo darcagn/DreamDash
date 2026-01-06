@@ -1,126 +1,27 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include <dc/biosfont.h>
+#include <kos/dbglog.h>
 
-#include <png/png.h>
+#include <dc/biosfont.h>
+#include <dc/pvr.h>
 
 #include "bmfont.h"
 #include "drawing.h"
+#include "texture.h"
 
-static pvr_ptr_t font_tex = NULL;
+static pvr_texture_t font_tex;
 
-pvr_init_params_t params = {
-        {PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_32, PVR_BINSIZE_0, PVR_BINSIZE_0},
-        512 * 1024
-};
-
-typedef struct {
-    char id[4];
-    short width;
-    short height;
-    int type;
-    int size;
-} tex_header_t;
-
-pvr_ptr_t back_tex;
-
-void back_init(void) {
-    back_tex = pvr_mem_malloc(WALLPAPER_WIDTH * WALLPAPER_HEIGHT * 2);
-    png_to_texture("/rd/"WALLPAPER_FILE, back_tex, PNG_NO_ALPHA);
-}
-
-void draw_back(void) {
-    pvr_poly_cxt_t cxt;
-    pvr_poly_hdr_t hdr;
-    pvr_vertex_t vert;
-
-    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565, WALLPAPER_WIDTH, WALLPAPER_HEIGHT, back_tex, PVR_FILTER_BILINEAR);
-    pvr_poly_compile(&hdr, &cxt);
-    pvr_prim(&hdr, sizeof(hdr));
-
-    vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
-    vert.oargb = 0;
-    vert.flags = PVR_CMD_VERTEX;
-
-    vert.x = 1;
-    vert.y = 1;
-    vert.z = 1;
-    vert.u = 0.0;
-    vert.v = 0.0;
-    pvr_prim(&vert, sizeof(vert));
-
-    vert.x = 640;
-    vert.y = 1;
-    vert.z = 1;
-    vert.u = 1.0;
-    vert.v = 0.0;
-    pvr_prim(&vert, sizeof(vert));
-
-    vert.x = 1;
-    vert.y = 480;
-    vert.z = 1;
-    vert.u = 0.0;
-    vert.v = 1.0;
-    pvr_prim(&vert, sizeof(vert));
-
-    vert.x = 640;
-    vert.y = 480;
-    vert.z = 1;
-    vert.u = 1.0;
-    vert.v = 1.0;
-    vert.flags = PVR_CMD_VERTEX_EOL;
-    pvr_prim(&vert, sizeof(vert));
-}
-
-#ifndef ROMFONT
-static BMFont bmf_font;
-#endif
-
-static void draw_init_font() {
 #ifdef ROMFONT
+static void draw_init_font(void) {
     /* Draw biosfont to a texture in vram */
-    uint16_t *vram;
-    int x, y;
-
-    font_tex = pvr_mem_malloc(256*256*2);
-    vram = (uint16_t *)font_tex;
-
-    for (y = 0; y < 8; y++) {
-        for (x = 0; x < 16; x++) {
-            bfont_draw(vram, 256, 0, y*16 + x);
-            vram += 16;
-        }
-        vram += 23*256;
+    texture_load_romfont(&font_tex);
+    if(!texture_valid(&font_tex)) {
+        dbglog(DBG_ERROR, "Error initting font!\n");
     }
-#else
-    FILE *fp;
-    tex_header_t hdr;
-
-    // parse BMFont font information
-    if (bmf_parse("/rd/"BMFONT_NAME".fnt", &bmf_font) != 0) {
-        return;
-    }
-
-    // load "texconv" texture
-    fp = fopen("/rd/"BMFONT_NAME".tex", "r");
-    if (fp == NULL) {
-        return;
-    }
-    // read "texconv" texture header
-    fread(&hdr, sizeof(hdr), 1, fp);
-    // allocate pvr mem
-    font_tex = pvr_mem_malloc(hdr.size);
-    // read "texconv" texture to pvr mem
-    fread(font_tex, hdr.size, 1, fp);
-
-    // all done
-    fclose(fp);
-#endif
 }
 
 static size_t draw_char(float x1, float y1, float z1, color_t color, int c) {
-#ifdef ROMFONT
     pvr_vertex_t vert;
     int ix, iy;
     float u1, v1, u2, v2;
@@ -162,7 +63,24 @@ static size_t draw_char(float x1, float y1, float z1, color_t color, int c) {
     pvr_prim(&vert, sizeof(vert));
 
     return ROMFONT_WIDTH;
-#else
+}
+#else // ROMFONT
+static BMFont bmf_font;
+
+static void draw_init_font(void) {
+    /* Parse BMFont font information */
+    if (bmf_parse("/rd/font.fnt", &bmf_font) != 0) {
+        dbglog(DBG_INFO, "couldn't load font info, uh oh\n");
+        return;
+    }
+
+    texture_load(&font_tex, "/rd/font.pvr");
+    if(!texture_valid(&font_tex)) {
+        return;
+    }
+}
+
+static size_t draw_char(float x1, float y1, float z1, color_t color, int c) {
     pvr_vertex_t vert;
 
     BMFontChar *bmf_char = &bmf_font.chars[c];
@@ -197,12 +115,12 @@ static size_t draw_char(float x1, float y1, float z1, color_t color, int c) {
     pvr_prim(&vert, sizeof(vert));
 
     return (float) (bmf_char->xadvance + bmf_char->xoffset);
-#endif
 }
+#endif // ROMFONT
 
 /* draw len chars at string */
 void draw_string(float x, float y, float z, color_t color, char *str) {
-    if(!str) {
+    if(!str || !texture_valid(&font_tex)) {
         return;
     }
 
@@ -210,12 +128,8 @@ void draw_string(float x, float y, float z, color_t color, char *str) {
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t poly;
 
-#ifdef ROMFONT
-    pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB1555 | PVR_TXRFMT_NONTWIDDLED,
-#else
-    pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB1555 | PVR_TXRFMT_VQ_ENABLE,
-#endif
-                     256, 256, font_tex, PVR_FILTER_NONE);
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, font_tex.format,
+                     font_tex.width, font_tex.height, font_tex.buffer, PVR_FILTER_NONE);
     pvr_poly_compile(&poly, &cxt);
     pvr_prim(&poly, sizeof(poly));
 
@@ -267,15 +181,34 @@ void draw_box_outline(float x, float y, float w, float h, float z, color_t color
     draw_box(x, y, w, h, z, color);
 }
 
+void draw_rect(rect_t rect, float z, color_t color) {
+    draw_box(rect.left, rect.top, rect.width, rect.height, z, color);
+}
+
+void draw_rect_outline(rect_t rect, float z, color_t color,
+                       color_t outline_color, float outline_size) {
+    draw_box_outline(rect.left, rect.top, rect.width, rect.height, z, color, outline_color, outline_size);
+}
+
+void draw_string_rect(rect_t rect, float z, color_t color, char *str) {
+    draw_string(rect.left + 5,
+                rect.top + DRAW_FONT_LINE_SPACING,
+                z, color, str);
+}
+
+void draw_string_rect_line(rect_t rect, float z, color_t color, char *str, size_t line) {
+    draw_string(rect.left + 5,
+                rect.top + DRAW_FONT_LINE_SPACING + (float)((line - 1) * DRAW_LINE_HEIGHT),
+                z, color, str);
+}
+
 void draw_init() {
-    pvr_init(&params);
+    pvr_init_defaults();
     draw_init_font();
 }
 
 void draw_exit() {
-    if (font_tex != NULL) {
-        pvr_mem_free(font_tex);
-    }
+    texture_free(&font_tex);
 }
 
 void draw_start() {
@@ -290,7 +223,7 @@ void draw_end() {
 }
 
 int draw_printf(const char *fmt, ...) {
-    if (font_tex == NULL) {
+    if (!texture_valid(&font_tex)) {
         return 0;
     }
 

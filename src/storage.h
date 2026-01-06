@@ -2,6 +2,6 @@
 #define DREAMDASH_STORAGE_H
 
 void storage_init(void);
-void storage_shutdown(void);
+void storage_exit(void);
 
 #endif //DREAMDASH_STORAGE_H

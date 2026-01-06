@@ -282,6 +282,7 @@ dbgio_handler_t dash_log_dbgio = {
 
 /* This overrides dbgio_init() in KallistiOS,
    so all logs will end up in DreamDash */
+#ifndef DISABLE_LOGGER
 int dbgio_init(void) {
     dbgio_add_handler(&dash_log_dbgio);
     dbgio_dev_select("dash");
@@ -289,3 +290,4 @@ int dbgio_init(void) {
 
     return 0;
 }
+#endif

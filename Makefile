@@ -15,11 +15,17 @@ else
     endif
 endif
 
+# Project name
+TARGET = dreamdash
+
+# Project version
+VERSION = 0.85
+
 ###### Objects #####################################################################################
 
 OBJS = src/dreamdash.o
-OBJS += src/drawing.o src/input.o src/storage.o src/utility.o
-OBJS += src/filer.o src/log.o src/mainmenu.o
+OBJS += src/bg.o src/drawing.o src/input.o src/storage.o src/texture.o src/utility.o
+OBJS += src/filer.o src/mainmenu.o
 
 ifeq ($(ROMFONT),0)
     OBJS += src/bmfont.o
@@ -29,9 +35,13 @@ ifneq ($(DISC_SUPPORT),0)
     OBJS += src/disc.o
 endif
 
+ifneq ($(DISABLE_LOGGER),1)
+    OBJS += src/log.o
+endif
+
 ###### Libraries ###################################################################################
 
-LIBS = -lpng -lz -lm
+LIBS = -lz -lm
 
 ifeq ("$(FAT_LIBRARY)","kosfat")
     LIBS += -lkosfat
@@ -50,12 +60,8 @@ KOS_ROMDISK_DIR = romdisk
 DCLOAD_IP_BIN = dcload-ip.bin
 DCLOAD_SERIAL_BIN = dcload-serial.bin
 
-WALLPAPER_FILE = $(WALLPAPER_NAME).png
-ROMDISK_FILES = $(WALLPAPER_FILE)
-
-ifeq ($(ROMFONT),0)
-    ROMDISK_FILES += $(BMFONT_NAME).fnt $(BMFONT_NAME).tex
-endif
+WALLPAPER_BASENAME = $(WALLPAPER_NAME)-wall-$(WALLPAPER_SIZE)
+WALLPAPER_FILE = $(WALLPAPER_BASENAME).png
 
 GZ_ROMDISK_FILES = $(DCLOAD_IP_BIN) $(DCLOAD_SERIAL_BIN)
 
@@ -67,20 +73,13 @@ endif
 
 HAVE_MKDCDISC := $(shell command -v mkdcdisc 2> /dev/null)
 
-WALLPAPER_SIZE := $(shell file $(RESOURCE_DIR)/$(WALLPAPER_NAME).png | grep -oE '[0-9]+ x [0-9]+' | head -1)
-WALLPAPER_WIDTH := $(firstword $(WALLPAPER_SIZE))
-WALLPAPER_HEIGHT := $(lastword $(WALLPAPER_SIZE))
-
 DCLOAD_IP_BINSIZE := $(shell wc -c < $(RESOURCE_DIR)/$(DCLOAD_IP_BIN))
 DCLOAD_SERIAL_BINSIZE := $(shell wc -c < $(RESOURCE_DIR)/$(DCLOAD_SERIAL_BIN))
 
 ###### Flags #######################################################################################
 
-KOS_CFLAGS += -DWALLPAPER_FILE="$(WALLPAPER_NAME).png"
-KOS_CFLAGS += -DWALLPAPER_WIDTH=$(WALLPAPER_WIDTH) -DWALLPAPER_HEIGHT=$(WALLPAPER_HEIGHT)
 KOS_CFLAGS += -DDCLOAD_IP_BINSIZE=$(DCLOAD_IP_BINSIZE) -DDCLOAD_SERIAL_BINSIZE=$(DCLOAD_SERIAL_BINSIZE)
 KOS_CFLAGS += -DDASH_VERSION="$(VERSION)"
-KOS_CFLAGS += -DBMFONT_NAME="$(BMFONT_NAME)"
 
 ifneq ($(AUTOBOOT),0)
     KOS_CFLAGS += -DAUTOBOOT
@@ -92,6 +91,10 @@ endif
 
 ifneq ($(ROMFONT),0)
     KOS_CFLAGS += -DROMFONT
+endif
+
+ifneq ($(DISABLE_LOGGER),0)
+    KOS_CFLAGS += -DDISABLE_LOGGER
 endif
 
 ifeq ("$(FAT_LIBRARY)","kosfat")
@@ -123,6 +126,25 @@ default: rm-elf $(TARGET).elf
 
 include $(KOS_BASE)/Makefile.rules
 
+wallpaper:
+	@mkdir -p $(KOS_ROMDISK_DIR)
+	@$(KOS_BASE)/utils/pvrtex/pvrtex \
+		-i $(RESOURCE_DIR)/$(WALLPAPER_FILE) \
+		-o $(KOS_ROMDISK_DIR)/wallpaper.pvr \
+		-f ARGB1555 \
+		-c
+
+font:
+ifeq ($(ROMFONT),0)
+	@mkdir -p $(KOS_ROMDISK_DIR)
+	cp $(RESOURCE_DIR)/$(BMFONT_NAME).fnt $(KOS_ROMDISK_DIR)/font.fnt
+	@$(KOS_BASE)/utils/pvrtex/pvrtex \
+		-i $(RESOURCE_DIR)/$(BMFONT_NAME).png \
+		-o $(KOS_ROMDISK_DIR)/font.pvr \
+		-f ARGB1555 \
+		-c
+endif
+
 $(ROMDISK_FILES):
 	@mkdir -p $(KOS_ROMDISK_DIR)
 	cp $(RESOURCE_DIR)/$@ $(KOS_ROMDISK_DIR)/$@
@@ -131,7 +153,7 @@ $(GZ_ROMDISK_FILES):
 	@mkdir -p $(KOS_ROMDISK_DIR)
 	gzip -c $(RESOURCE_DIR)/$@ > $(KOS_ROMDISK_DIR)/$@.gz
 
-$(TARGET).elf: $(ROMDISK_FILES) $(GZ_ROMDISK_FILES) $(OBJS) romdisk.o
+$(TARGET).elf: wallpaper font $(ROMDISK_FILES) $(GZ_ROMDISK_FILES) $(OBJS) romdisk.o
 	kos-cc -o $(TARGET).elf $(OBJS) romdisk.o $(LIBS)
 
 all: $(TARGET).elf $(TARGET).bin 1ST_READ.BIN $(TARGET).cdi bios-all
@@ -215,3 +237,4 @@ $(TARGET)-devkit-nogdrom-32mb.bios: release-dir $(TARGET).bin
 
 bios-all: bios bios-nogdrom bios-devkit bios-devkit-nogdrom bios-32mb bios-nogdrom-32mb bios-devkit-32mb bios-devkit-nogdrom-32mb
 
+.PHONY: wallpaper font

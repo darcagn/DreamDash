@@ -24,7 +24,6 @@ typedef struct ip_meta {
 	char title[128];
 } ip_meta_t;
 
-int disc_init(void);
 bool disc_ready(void);
 void disc_shutdown(void);
 void disc_launch(void);
