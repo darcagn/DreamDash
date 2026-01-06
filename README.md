@@ -1,33 +1,51 @@
-# DreamDash BIOS
-DreamDash is a replacement BIOS for Dreamcast power users and developers. It requires KallistiOS to build.
+# DreamDash
+DreamDash is a multi-use bootCD tool and replacement BIOS
 
 ![dreamdash-preview](https://github.com/user-attachments/assets/b0aa299f-2c0e-4fa7-9a9c-868ccfb49de6)
 
+## Uses
+- **Burn to CD** and use DreamDash to boot import discs and bypass VGA restrictions, load DreamShell, and launch homebrew from SD adapters, internal SD mods, and IDE, CompactFlash, and SATA mods
+- **Install as a BIOS** with a BIOS mod to boot directly into DreamDash and launch games and utilities from storage devices with no discs needed! You can even ditch your GD-ROM drive completely.
+
 ## Functionality
-- Launch binaries directly from SD card or IDE drive
-- dcload-ip and dcload-serial binaries embedded directly into ROM
-- Menu entries appear for DreamShell or RetroDream if found on SD or IDE device
-- Configurable to auto-boot into DreamShell or RetroDream if found on on SD or IDE device
-- Launch games or applications from GD-ROM drive
+- Boot into DreamShell, including with configurable autoboot
+- Launch homebrew directly from SD card adapters, internal SD card mods, and IDE, CompactFlash, or SATA drives
+- dcload-ip and dcload-serial support built directly in, with autoboot available for rapid development
 - Choose between light or dark wallpaper theme
 - Choose between retail or devkit style intro
-- Support for Dreamcast consoles with 32MB RAM
-- Build as a BIOS, a standalone binary utility, or a CD image
+- Support for Dreamcast consoles with 32MB RAM expansion
 
-## Issues/Limitations
-- BIOS image will not work if stripped binary size is larger than roughly 500KB
-  - Build your KallistiOS, kos-ports, and DreamDash with `-Os` and `-flto=auto` to help stay below this limit
-  - Always have a backup BIOS image on your console for recovery if flashing to console
-- Certain older homebrew is not compatible with consoles using a custom BIOS without patching
-  - This applies equally for launching from CD, SD, or IDE
-- Phantasy Star Online Ver 2's anti-cheat tamper protection causes bugs when launched via this BIOS
+## Roadmap
+- Support for use as a GDEMU frontend
+- VMU and saves management
+- System settings management
+- ISP settings management
+- Non-selfboot (Utopia style) disc booting
+- Networking with Broadband Adapter, LAN Adapter, or WIZnet W5500 adapter
+  - Automatic NTP time/date setting over network
+- Plugin system for expandability
+  - Integration with [Dream Web Console](https://github.com/darcagn/dream-web-console)
 
 ## How to Use
+### bootCD
+- Download DreamDash from the [releases](https://github.com/darcagn/DreamDash/releases) page.
+- Unzip the release file and find the `dreamdash.cdi` file.
+- Burn the [DiscJuggler CDI](https://dreamcast.wiki/DiscJuggler) file with a CD burner.
+
+### BIOS
+- Modify your Dreamcast with a [BIOS mod](https://dreamcast.wiki/BIOS_modification). Soldering required!
+- Burn and boot the latest [DreamShell release](https://github.com/DC-SWAT/DreamShell/releases).
+- Download DreamDash from the [releases](https://github.com/darcagn/DreamDash/releases) page.
+- Using an SD adapter or other file storage method, open the **BIOS Flasher** and write the DreamDash BIOS file.
+
+### Building from source
 - [Set up KallistiOS on your computer](https://dreamcast.wiki/Getting_Started_with_Dreamcast_development).
-- Compile KOS and the `zlib`/`libpng` kos-ports with `-Os` and `-flto=auto` in your `KOS_CFLAGS` to keep code size small.
-  - KOS master with commit ID `9c5ee7e` is known to compile with this code.
+- When setting up the toolchain, adjust your `Makefile.cfg` configuration to enable newlib space optimizations.
+- Compile KOS and the `zlib` kos-port with `-Os` and `-flto=auto` in your `KOS_CFLAGS` to keep code size small.
+  - KOS master with commit ID `7b0b815` is known to compile with this code.
 - Open a terminal and source your KOS environment, clone this repo, and change into this repo's directory.
-- Run `make` to build `dreamdash.elf`. Run `kos-strip dreamdash.elf` and check the filesize. If larger than 500KB, it may not work and can produce a non-working BIOS image, so check your `KOS_CFLAGS` and try again.
+- Alter your desired settings in `Makefile.cfg`.
+- Run `make` to build `dreamdash.elf`.
 - Run `make all` to build everything. Check the `release` directory for generated files:
   - `dreamdash.bin`: Plain raw binary
   - `1ST_READ.BIN`: Scrambled binary for booting from CD-R
