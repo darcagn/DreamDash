@@ -30,16 +30,13 @@ static size_t texture_fill_from_buffer(pvr_texture_t *texture, uint8_t *buffer, 
 
     pvr_header_t *header = NULL;
 
-    /* Check for PVRT header */
-    if (buffer[0] == 'P' && buffer[1] == 'V' &&
-        buffer[2] == 'R' && buffer[3] == 'T') {
-        header = (pvr_header_t *)buffer;
-    }
-    /* Maybe there's a GBIX header, so check for PVRT header at offset 0x10 */
-    else if (size > 0x10 + sizeof(pvr_header_t) &&
-             buffer[0x10] == 'P' && buffer[0x11] == 'V' &&
-             buffer[0x12] == 'R' && buffer[0x13] == 'T') {
-        header = (pvr_header_t *)(buffer + 0x10);
+    /* Search for PVR header in the first 64 bytes at 4 byte increments */
+    for (size_t i = 0; i < 64; i += 4) {
+        if (buffer[i] == 'P' && buffer[i+1] == 'V' &&
+            buffer[i+2] == 'R' && buffer[i+3] == 'T') {
+        header = (pvr_header_t *)(buffer + i);
+        break;
+        }
     }
 
     if (!header) {
